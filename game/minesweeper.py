@@ -11,6 +11,7 @@ class MineSweeper(object):
     # ゲーム初期設定
     def setting(self):
         while(True):
+            os.system(CLEAR)
             select = input(">>マス目の数を入力してください: ")
             try:
                 select = int(select)
@@ -20,11 +21,10 @@ class MineSweeper(object):
                 continue
         # ゲーム画面作成
         self._set_window(select)
-        print(self.ms_list)
 
     # ゲーム画面作成
     def _set_window(self, select):
-        self.ms_list = []
+        self.main_window = []
         sub_list_1 = [' '] # 1行目
         sub_list_2 = [' '] # 2行目
         for num in range(select):
@@ -32,8 +32,8 @@ class MineSweeper(object):
             sub_list_1.append(str(num+1))
             sub_list_2.append('')
             sub_list_2.append('_')
-        self.ms_list.append(sub_list_1)
-        self.ms_list.append(sub_list_2)
+        self.main_window.append(sub_list_1)
+        self.main_window.append(sub_list_2)
         # 3行目以降
         for num in range(select):
             sub_list_3 = []
@@ -41,14 +41,49 @@ class MineSweeper(object):
             sub_list_3.append('|')
             for _ in range(select):
                 sub_list_3.append('o')
-            self.ms_list.append(sub_list_3)
+            self.main_window.append(sub_list_3)
 
     # ゲームスタート
     def start(self):
-        pass
+        os.system(CLEAR)
+        # 画面表示
+        self._show_window
+
+    # 画面表示
+    def _show_window(self):
+        while(True):
+            os.system(CLEAR)
+            print(self.main_window)
+            # 座標入力メニュー
+            flag = self._matrix_input_menu()
+            
+    
+    # 座標入力メニュー
+    def _matrix_input_menu(self):
+        while(True):
+            print("\n~メニュー~\n1: 旗を立てる\n2: マスを開放する")
+            select = input(":")
+            if select.lower() == '1':
+                pass
+            elif select. lower() == '2':
+                pass
+            else:
+                print("\n入力が間違っています")
+                return False
+            mtr = input("\n>>行→列の順で座標を入力してください(間にはコンマを打つ): ")
+            mtr = mtr.replace(' ', '')
+            try:
+                mtr_list = mtr.split(',')
+                self.mtr_row = int(mtr_list[0])
+                self.mtr_column = int(mtr_list[1])
+                break
+            except:
+                print(">>入力が間違っています。")
+                continue
 
     # ゲーム説明
     def explainment(self):
+        os.system(CLEAR)
         pass
 
 
@@ -64,7 +99,6 @@ def main():
             print(">>入力が間違っています。")
             continue
         break
-    os.system(CLEAR)
     # ゲーム初期設定
     Game.setting()
     # ゲーム開始
