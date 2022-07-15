@@ -1,7 +1,7 @@
 import os
 
 
-CLEAR = 'cls' if os.name == 'nt' else 'clear' # 実行os判別
+CLEAR: str = 'cls' if os.name == 'nt' else 'clear' # 実行os判別
 
 
 class MineSweeper(object):
@@ -9,24 +9,26 @@ class MineSweeper(object):
         pass
 
     # ゲーム初期設定
-    def setting(self):
+    def setting(self) -> None:
         while(True):
             os.system(CLEAR)
-            select = input(">>マス目の数を入力してください: ")
+            select: str = input(">>マス目の数を入力してください: ")
             try:
-                select = int(select)
+                select: int = int(select)
                 break
             except:
                 print(">>入力が間違っています。")
                 continue
         # ゲーム画面作成
         self._set_window(select)
+        # 状態作成
+        self._set_flag(select)
 
     # ゲーム画面作成
-    def _set_window(self, select):
-        self.main_window = []
-        sub_list_1 = [' '] # 1行目
-        sub_list_2 = [' '] # 2行目
+    def _set_window(self, select:int) -> None:
+        self.main_window: list[str] = []
+        sub_list_1: list[str] = [' '] # 1行目
+        sub_list_2: list[str] = [' '] # 2行目
         for num in range(select):
             sub_list_1.append(' ')
             sub_list_1.append(str(num+1))
@@ -36,53 +38,64 @@ class MineSweeper(object):
         self.main_window.append(sub_list_2)
         # 3行目以降
         for num in range(select):
-            sub_list_3 = []
+            sub_list_3: list[str] = []
             sub_list_3.append(str(num+1))
             sub_list_3.append('|')
             for _ in range(select):
                 sub_list_3.append('o')
             self.main_window.append(sub_list_3)
 
+    # 状態作成
+    def _set_flag(self, select:int) -> None:
+        self.main_flag: list[int] = []
+        for _ in range(select):
+            sub_list_1: list[int] = []
+            for _ in range(select):
+                sub_list_1.append(0)
+            self.main_flag.append(sub_list_1)
+
     # ゲームスタート
-    def start(self):
+    def start(self) -> None:
         os.system(CLEAR)
         # 画面表示
         self._show_window
 
     # 画面表示
-    def _show_window(self):
+    def _show_window(self) -> None:
         while(True):
             os.system(CLEAR)
             print(self.main_window)
             # 座標入力メニュー
-            flag = self._matrix_input_menu()
+            flag: bool = self._matrix_input_menu()
+            if flag:
+                break
             
     
     # 座標入力メニュー
-    def _matrix_input_menu(self):
+    def _matrix_input_menu(self) -> bool:
         while(True):
             print("\n~メニュー~\n1: 旗を立てる\n2: マスを開放する")
-            select = input(":")
+            select: str = input(":")
             if select.lower() == '1':
-                pass
+                self.mode: int = 1
             elif select. lower() == '2':
-                pass
+                self.mode: int = 2
             else:
                 print("\n入力が間違っています")
                 return False
-            mtr = input("\n>>行→列の順で座標を入力してください(間にはコンマを打つ): ")
-            mtr = mtr.replace(' ', '')
+            mtr: str = input("\n>>行→列の順で座標を入力してください(間にはコンマを打つ): ")
+            mtr: str = mtr.replace(' ', '')
             try:
-                mtr_list = mtr.split(',')
-                self.mtr_row = int(mtr_list[0])
-                self.mtr_column = int(mtr_list[1])
+                mtr_list: list[str] = mtr.split(',')
+                self.mtr_row: int = int(mtr_list[0])
+                self.mtr_column: int = int(mtr_list[1])
                 break
             except:
                 print(">>入力が間違っています。")
-                continue
+                return False
 
     # ゲーム説明
-    def explainment(self):
+    def explainment(self) -> None:
         os.system(CLEAR)
         pass
 
@@ -91,7 +104,7 @@ def main():
     Game = MineSweeper()
     while(True):
         os.system(CLEAR)
-        select = input(">>ゲーム説明を見ますか?[y/n]: ")
+        select: str = input(">>ゲーム説明を見ますか?[y/n]: ")
         if select.lower() == 'y':
             # ゲーム説明
             Game.explainment()
