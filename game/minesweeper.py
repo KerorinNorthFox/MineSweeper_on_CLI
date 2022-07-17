@@ -64,7 +64,7 @@ class MineSweeper(object):
         for _ in range(select):
             sub_list_1: list[int] = []
             for _ in range(select):
-                sub_list_1.append(0)
+                sub_list_1.append(None)
             self.main_flag.append(sub_list_1)
 
     # ゲームスタート
@@ -76,10 +76,11 @@ class MineSweeper(object):
         # 旗を立てる
         if self.mode == 1:
             self._post_flag()
-            
         # マス解放
         elif self.mode == 2:
             self._release_block()
+
+        
         print(self.mode)
         print(self.mtr_row)
         print(self.mtr_column)
@@ -122,11 +123,11 @@ class MineSweeper(object):
 
     # 旗を立てる
     def _post_flag(self):
-        pass
+        self.main_flag[self.mtr_row-1][self.mtr_column-1] = True
 
     # マスを開放する
     def _release_block(self):
-        pass
+        self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
 
     # ゲーム説明
     def explainment(self) -> None:
