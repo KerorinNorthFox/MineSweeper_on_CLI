@@ -15,9 +15,11 @@ class MineSweeper(object):
         while(True):
             os.system(CLEAR)
             print("<-初期設定->")
-            select: str = input("\n>>マス目の数を入力してください: ")
+            self.blc_num: str = input("\n>>マス目の数を入力してください(5以上20以下): ")
             try:
-                select: int = int(select)
+                self.blc_num: int = int(self.blc_num)
+                if self.blc_num < 5 or self.blc_num > 20:
+                    raise
                 break
             except:
                 print("\n>>入力が間違っています。")
@@ -25,9 +27,9 @@ class MineSweeper(object):
                 continue
 
         # ゲーム画面作成
-        self._set_window(select)
+        self._set_window(self.blc_num)
         # 状態作成
-        self._set_flag(select)
+        self._set_flag(self.blc_num)
 
         print("\n>>ゲームを作成しました。\n")
         for i in range(3, 0, -1):
@@ -37,13 +39,13 @@ class MineSweeper(object):
     # ゲーム画面作成
     def _set_window(self, select:int) -> None:
         self.main_window: list[str] = []
-        sub_list_1: list[str] = [' '] # 1行目
-        sub_list_2: list[str] = [' '] # 2行目
+        sub_list_1: list[str] = ['  '] # 1行目
+        sub_list_2: list[str] = ['  '] # 2行目
 
         for num in range(select):
             sub_list_1.append(' ')
-            sub_list_1.append(str(num+1))
-            sub_list_2.append('__')
+            sub_list_1.append("%2s" % str(num+1))
+            sub_list_2.append('___')
         
         self.main_window.append(sub_list_1)
         self.main_window.append(sub_list_2)
@@ -51,11 +53,10 @@ class MineSweeper(object):
         # 3行目以降
         for num in range(select):
             sub_list_3: list[str] = []
-            sub_list_3.append(str(num+1))
+            sub_list_3.append("%2s" % str(num+1))
             sub_list_3.append('|')
             for _ in range(select):
-                sub_list_3.append('o')
-                sub_list_3.append(' ')
+                sub_list_3.append(' o ')
             self.main_window.append(sub_list_3)
 
     # 状態作成
@@ -94,8 +95,10 @@ class MineSweeper(object):
                 print(''.join(num))
             # 座標入力メニュー
             flag: bool = self._matrix_input_menu()
-            if flag:
-                break
+            if not flag:
+                print("\n>>入力が間違っています")
+                time.sleep(TIME)
+            break
     
     # 座標入力メニュー
     def _matrix_input_menu(self) -> bool:
@@ -106,8 +109,6 @@ class MineSweeper(object):
         elif select. lower() == '2':
             self.mode: int = 2
         else:
-            print("\n>>入力が間違っています")
-            time.sleep(TIME)
             return False
         mtr: str = input("\n>>行→列の順で数字の座標を入力してください(数字の間にはコンマを打つ): ")
         mtr: str = mtr.replace(' ', '')
@@ -115,9 +116,9 @@ class MineSweeper(object):
             mtr_list: list[str] = mtr.split(',')
             self.mtr_row: int = int(mtr_list[0])
             self.mtr_column: int = int(mtr_list[1])
+            if self.mtr_row > self.blc_num or self.mtr_column > self.blc_num:
+                raise
         except:
-            print("\n>>入力が間違っています。")
-            time.sleep(TIME)
             return False
         return True
 
@@ -129,12 +130,17 @@ class MineSweeper(object):
     def _release_block(self):
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
 
+    # 画面再構築
+    def _remake_window(self):
+        pass
+
     # ゲーム説明
     def explainment(self) -> None:
         os.system(CLEAR)
         pass
 
 
+# ゲーム実行
 def main():
     Game = MineSweeper()
     while(True):
@@ -154,6 +160,7 @@ def main():
     Game.start()
 
 
+# テスト用
 if __name__ == '__main__':
     Game = MineSweeper()
     Game.setting()
