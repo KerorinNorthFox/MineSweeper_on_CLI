@@ -1,4 +1,3 @@
-from inspect import _void
 import os
 import time
 
@@ -51,7 +50,7 @@ class Window(object):
     def start(self, Game) -> None:
         os.system(CLEAR)
         # 画面表示
-        self._show_window()
+        self._show_window(Game)
 
         # 旗を立てる
         if self.mode == 1:
@@ -108,5 +107,7 @@ class Window(object):
             # 座標情報セット
         Game.set_matrix(row, column)
         return True
+        
+        
 
         
