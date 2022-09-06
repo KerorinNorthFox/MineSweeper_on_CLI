@@ -23,10 +23,10 @@ class Window(object):
             break
 
     def setting(self) -> int:
-        os.system(CLEAR)
-        print("<-初期設定->")
-        blc_num: str = input("\n>>マス目の数を入力してください(5以上20以下): ")
         while(True):
+            os.system(CLEAR)
+            print("<-初期設定->")
+            blc_num: str = input("\n>>マス目の数を入力してください(5以上20以下): ")
             try:
                 blc_num: int = int(blc_num)
                 if blc_num < 5 or blc_num > 20:
@@ -37,6 +37,9 @@ class Window(object):
                 time.sleep(TIME)
                 continue
 
+        # ゲーム画面作成
+        self._set_window(blc_num)
+
         yield blc_num
 
         print("\n>>ゲームを作成しました。\n")
@@ -46,30 +49,36 @@ class Window(object):
             
         yield None
 
-    # ゲームスタート
-    def start(self, Game) -> None:
-        os.system(CLEAR)
-        # 画面表示
-        self._show_window(Game)
+    # ゲーム画面作成
+    def _set_window(self, blc_num) -> None:
+        self.main_window: list[str] = []
+        sub_list_1: list[str] = ['  '] # 1行目
+        sub_list_2: list[str] = ['  '] # 2行目
 
-        # 旗を立てる
-        if self.mode == 1:
-            Game.post_flag()
-        # マス解放
-        elif self.mode == 2:
-            Game.release_block()
-
+        for num in range(blc_num):
+            sub_list_1.append(' ')
+            sub_list_1.append("%2s" % str(num+1))
+            sub_list_2.append('___')
         
-        print(self.mode)
-        print(Game.mtr_row)
-        print(Game.mtr_column)
+        self.main_window.append(sub_list_1)
+        self.main_window.append(sub_list_2)
+
+        # 3行目以降
+        for num in range(blc_num):
+            sub_list_3: list[str] = []
+            sub_list_3.append("%2s" % str(num+1))
+            sub_list_3.append('|')
+            for _ in range(blc_num):
+                sub_list_3.append(' o ')
+            self.main_window.append(sub_list_3)
 
     # 画面表示
-    def _show_window(self, Game) -> None:
+    def show_window(self, Game) -> None:
+        os.system(CLEAR)
         while(True):
             os.system(CLEAR)
             # リスト内要素を結合して出力
-            for num in Game.main_window:
+            for num in self.main_window:
                 print(''.join(num))
             
             # 座標入力メニュー
@@ -87,9 +96,9 @@ class Window(object):
         select: str = input(":")
         
         if select.lower() == '1':
-            self.mode: int = 1
+            Game.mode: int = 1
         elif select. lower() == '2':
-            self.mode: int = 2
+            Game.mode: int = 2
         else:
             return False
 

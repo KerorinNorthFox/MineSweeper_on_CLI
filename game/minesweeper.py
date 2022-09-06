@@ -1,5 +1,5 @@
-import os
-import time
+import random
+import copy
 from game.window import CLEAR, TIME
 
 
@@ -13,43 +13,78 @@ class MineSweeper(object):
     def setting(self, blc_num) -> None:
         self.blc_num = blc_num
 
-        # ゲーム画面作成
-        self._set_window(self.blc_num)
         # 状態作成
-        self._set_flag(self.blc_num)
-
-    # ゲーム画面作成
-    def _set_window(self, select:int) -> None:
-        self.main_window: list[str] = []
-        sub_list_1: list[str] = ['  '] # 1行目
-        sub_list_2: list[str] = ['  '] # 2行目
-
-        for num in range(select):
-            sub_list_1.append(' ')
-            sub_list_1.append("%2s" % str(num+1))
-            sub_list_2.append('___')
-        
-        self.main_window.append(sub_list_1)
-        self.main_window.append(sub_list_2)
-
-        # 3行目以降
-        for num in range(select):
-            sub_list_3: list[str] = []
-            sub_list_3.append("%2s" % str(num+1))
-            sub_list_3.append('|')
-            for _ in range(select):
-                sub_list_3.append(' o ')
-            self.main_window.append(sub_list_3)
+        self._set_flag()
+        # 爆弾配置
+        self._set_bomb()
 
     # 状態作成
-    def _set_flag(self, select:int) -> None:
+    def _set_flag(self) -> None:
         self.main_flag: list[int] = []
-        for _ in range(select):
+        for _ in range(self.blc_num):
             sub_list_1: list[int] = []
-            for _ in range(select):
+            for _ in range(self.blc_num):
                 sub_list_1.append(None)
             self.main_flag.append(sub_list_1)
-    
+
+    # 爆弾配置    
+    def _set_bomb(self) -> None:
+        self.main_bomb = copy.deepcopy(self.main_flag)
+
+        if self.blc_num < 8: i = 2
+        elif self.blc_num < 10: i = 3
+        elif self.blc_num < 12: i = 4
+        elif self.blc_num < 14: i = 5
+        elif self.blc_num < 16: i = 6
+        elif self.blc_num < 18: i = 7
+        elif self.blc_num <= 20: i = 8
+
+        for num in range(self.blc_num):
+            print(f"{num}列目")
+            bombs = random.randint(1, i)
+            print(f"爆弾数: {bombs}")
+
+            count = 0
+            while(True):
+                exc = []
+                bomb_pos = random.randint(0, self.blc_num)
+
+                for n in exc:
+                    if bomb_pos == n:
+                        continue
+                exc.append(bomb_pos)
+
+                print(f"爆弾位置: {bomb_pos}")
+                self.main_bomb[num][bomb_pos-1] = 'B'
+
+                count += 1
+                if count >= bombs:
+                    break
+
+
+    # ゲームスタート
+    def start(self, Window:object) -> None:
+        # 画面表示
+        Window.show_window(self)
+
+        # 旗を立てる
+        if self.mode == 1:
+            self._post_flag()
+        # マス解放
+        elif self.mode == 2:
+            self._release_block()
+
+        
+        print(self.mode)
+        print(self.mtr_row)
+        print(self.mtr_column)
+        print(' ')
+        print(Window.main_window)
+        print(' ')
+        print(self.main_flag)
+        print(' ')
+        print(self.main_bomb)
+
     # 座標情報セット
     def set_matrix(self, row, column):
         # 行
@@ -58,11 +93,11 @@ class MineSweeper(object):
         self.mtr_column = column
         
     # 旗を立てる
-    def post_flag(self):
+    def _post_flag(self):
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = True
 
     # マスを開放する
-    def release_block(self):
+    def _release_block(self):
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
 
     # 画面再構築
