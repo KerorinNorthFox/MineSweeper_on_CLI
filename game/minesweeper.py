@@ -45,7 +45,7 @@ class MineSweeper(object):
             print(f"爆弾数: {bombs}")
 
             count = 0
-            while(True):
+            while(count < bombs):
                 exc = []
                 bomb_pos = random.randint(0, self.blc_num)
 
@@ -58,9 +58,6 @@ class MineSweeper(object):
                 self.main_bomb[num][bomb_pos-1] = 'B'
 
                 count += 1
-                if count >= bombs:
-                    break
-
 
     # ゲームスタート
     def start(self, Window:object) -> None:
