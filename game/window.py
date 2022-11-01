@@ -1,5 +1,6 @@
 import os
 import time
+import sys
 
 
 CLEAR: str = 'cls' if os.name == 'nt' else 'clear' # 実行os判別
@@ -119,16 +120,24 @@ class Window(object):
         Game.set_matrix(row, column)
         return True
 
+    # 画面再構築
+    def remake_window(self) -> None:
+        pass
+
+    # ゲームオーバー
+    def game_over(self):
+        sys.exit()
+
     # 画面クリア
-    def window_clear(self):
+    def window_clear(self) -> None:
         os.system(CLEAR)
 
     # スリープ
-    def sleep(self, t=TIME):
+    def sleep(self, t=TIME) -> None:
         time.sleep(t)
 
     # 表示
-    def print(self, text):
+    def print(self, text) -> None:
         print(text)
         
 

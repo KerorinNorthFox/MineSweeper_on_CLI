@@ -14,11 +14,9 @@ GW = Window()
 # ゲーム説明
 GW.explainment(Game.explainment)
 
-# ゲーム初期設定
-blc_num: iter = GW.setting()
-Game.setting(next(blc_num))
-next(blc_num)
-
-# ゲーム開始
+# ゲーム開始:初期設定など
 Game.start(GW)
+
+# ゲーム更新
+Game.update(GW)
 

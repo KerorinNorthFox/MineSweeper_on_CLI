@@ -7,16 +7,22 @@ import copy
 self.first :
 self.explainment :ゲーム説明文
 self.blc_num :縦横の配列の長さ
-self.main_flag :状態の二次元配列(何もないところはNone、)
-self.main_bomb :爆弾の配置の二次元配列(爆弾のあるところは'Bomb'、ないところはNone)
+self.main_flag :状態の二次元配列(解放されてないところはFalse、旗はTrue、解放されたところはNone)
+self.main_bomb :爆弾の配置の二次元配列(爆弾のあるところはTrue、ないところはFalse)
 """
 class MineSweeper(object):
     def __init__(self) -> None:
         self.first: bool = True
         self.explainment: str = ''
 
+    # ゲームスタート:初期設定など
+    def start(self, Window:object) -> None:
+        blc_num: iter = Window.setting()
+        self._setting(next(blc_num))
+        next(blc_num)
+
     # ゲーム初期設定
-    def setting(self, blc_num:int) -> None:
+    def _setting(self, blc_num:int) -> None:
         self.blc_num: int = blc_num
 
         # 状態作成
@@ -30,7 +36,7 @@ class MineSweeper(object):
         for _ in range(self.blc_num):
             sub_list_1: list[int] = []
             for _ in range(self.blc_num):
-                sub_list_1.append(None)
+                sub_list_1.append(False)
             self.main_flag.append(sub_list_1)
 
     # 爆弾配置    
@@ -64,12 +70,12 @@ class MineSweeper(object):
                 exc.append(bomb_pos)
 
                 print(f"爆弾位置: {bomb_pos}") ########################################
-                self.main_bomb[num][bomb_pos-1] = "Bomb"
+                self.main_bomb[num][bomb_pos-1] = True
 
                 count += 1
 
-    # ゲームスタート
-    def start(self, Window:object) -> None:
+    # ゲーム更新
+    def update(self, Window:object) -> None:
         # 画面表示
         Window.show_window(self)
 
@@ -79,6 +85,9 @@ class MineSweeper(object):
         # マス解放
         elif self.mode == 2:
             self._release_block()
+            # 爆弾に当たったか
+            if self.main_bomb[self.mtr_row-1][self.mtr_column-1]:
+                Window.game_over()
 
         
         print(self.mode)
@@ -104,17 +113,13 @@ class MineSweeper(object):
 
     # マスを開放する
     def _release_block(self):
-        self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
-
-    # 画面再構築
-    def remake_window(self):
-        pass
+        self.main_flag[self.mtr_row-1][self.mtr_column-1] = None    
 
 
 # テスト用
 if __name__ == '__main__':
     Game = MineSweeper()
-    Game.setting()
+    Game._setting()
     for num in Game.main_window:
         print(''.join(num))
     print(Game.main_flag)
