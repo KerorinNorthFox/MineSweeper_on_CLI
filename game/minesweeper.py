@@ -1,17 +1,23 @@
 import random
 import copy
-from game.window import CLEAR, TIME
 
 
 # ゲーム処理
+""" このクラスに属する変数一覧
+self.first :
+self.explainment :ゲーム説明文
+self.blc_num :縦横の配列の長さ
+self.main_flag :状態の二次元配列(何もないところはNone、)
+self.main_bomb :爆弾の配置の二次元配列(爆弾のあるところは'Bomb'、ないところはNone)
+"""
 class MineSweeper(object):
     def __init__(self) -> None:
         self.first: bool = True
         self.explainment: str = ''
 
     # ゲーム初期設定
-    def setting(self, blc_num) -> None:
-        self.blc_num = blc_num
+    def setting(self, blc_num:int) -> None:
+        self.blc_num: int = blc_num
 
         # 状態作成
         self._set_flag()
@@ -29,33 +35,36 @@ class MineSweeper(object):
 
     # 爆弾配置    
     def _set_bomb(self) -> None:
-        self.main_bomb = copy.deepcopy(self.main_flag)
+        # main_flagからNoneの入った配列をコピー
+        self.main_bomb: list[None] = copy.deepcopy(self.main_flag)
 
-        if self.blc_num < 8: i = 2
-        elif self.blc_num < 10: i = 3
-        elif self.blc_num < 12: i = 4
-        elif self.blc_num < 14: i = 5
-        elif self.blc_num < 16: i = 6
-        elif self.blc_num < 18: i = 7
-        elif self.blc_num <= 20: i = 8
+        # 配列の長さによって爆弾の数を調整
+        blc_lim: list[int] = [7, 9, 11, 13, 15, 17, 20]
+        bomb_num: list[int] = [2, 3, 4, 5, 6, 7, 8]
+        for c, lim in enumerate(blc_lim):
+            if self.blc_num <= lim:
+                i: int = bomb_num[c]
+                break
 
         for num in range(self.blc_num):
-            print(f"{num}列目")
-            bombs = random.randint(1, i)
-            print(f"爆弾数: {bombs}")
+            print(f"{num}列目") ########################################
+            bombs = random.randint(1, i) ########################################
+            print(f"爆弾数: {bombs}") ########################################
 
-            count = 0
+            count: int = 0
             while(count < bombs):
-                exc = []
-                bomb_pos = random.randint(0, self.blc_num)
+                # 爆弾の位置を一時的に保存
+                exc: list[int] = []
+                bomb_pos: int = random.randint(0, self.blc_num)
 
                 for n in exc:
+                    # 爆弾の位置が被ってたらやり直し
                     if bomb_pos == n:
                         continue
                 exc.append(bomb_pos)
 
-                print(f"爆弾位置: {bomb_pos}")
-                self.main_bomb[num][bomb_pos-1] = 'B'
+                print(f"爆弾位置: {bomb_pos}") ########################################
+                self.main_bomb[num][bomb_pos-1] = "Bomb"
 
                 count += 1
 

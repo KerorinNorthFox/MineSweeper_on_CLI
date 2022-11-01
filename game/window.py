@@ -7,50 +7,54 @@ TIME: int = 2
 
 
 # ゲーム画面
+""" このクラスに属する変数一覧
+self.main_window :画面を表示するための二次元配列(解放されてないマス目は'o'で表示)
+"""
 class Window(object):
-    # 説明
-    def  explainment(self, Game) -> None:
+    # ゲーム説明
+    def  explainment(self, exp:str) -> None:
         while(True):
-            os.system(CLEAR)
-            select: str = input(">>ゲーム説明を見ますか?[y/n]: ")
-            if select.lower() == 'y':
-                # ゲーム説明
-                print(Game.explainment)
-            elif select.lower() != 'n':
-                print("\n>>入力が間違っています。")
-                time.sleep(TIME)
+            self.window_clear()
+            is_see_exp: str = input(">>ゲーム説明を見ますか?[y/n]: ")
+            if is_see_exp.lower() == 'y':
+                self.print(exp)
+            elif is_see_exp.lower() != 'n':
+                self.print("\n>>入力が間違っています。")
+                self.sleep()
                 continue
             break
 
+    # 初期設定の入力
     def setting(self) -> int:
         while(True):
-            os.system(CLEAR)
-            print("<-初期設定->")
+            self.window_clear()
+            self.print("<-初期設定->")
             blc_num: str = input("\n>>マス目の数を入力してください(5以上20以下): ")
             try:
                 blc_num: int = int(blc_num)
                 if blc_num < 5 or blc_num > 20:
-                    raise
+                    raise OutOfPredefinedNum()
                 break
-            except:
-                print("\n>>入力が間違っています。")
-                time.sleep(TIME)
-                continue
+            except ValueError:
+                self.print("\n>>数字を入力してください")
+            except OutOfPredefinedNum:
+                self.print("\n>>数字が既定の範囲外です")
+            self.sleep()
 
         # ゲーム画面作成
         self._set_window(blc_num)
 
         yield blc_num
 
-        print("\n>>ゲームを作成しました。\n")
+        self.print("\n>>ゲームを作成しました。\n")
         for i in range(3, 0, -1):
             print("\r開始まで... {}".format(i), end='', flush=True)
-            time.sleep(1)
+            self.sleep(t=1)
             
-        yield None
+        yield 0
 
     # ゲーム画面作成
-    def _set_window(self, blc_num) -> None:
+    def _set_window(self, blc_num:int) -> None:
         self.main_window: list[str] = []
         sub_list_1: list[str] = ['  '] # 1行目
         sub_list_2: list[str] = ['  '] # 2行目
@@ -73,31 +77,29 @@ class Window(object):
             self.main_window.append(sub_list_3)
 
     # 画面表示
-    def show_window(self, Game) -> None:
-        os.system(CLEAR)
+    def show_window(self, Game:object) -> None:
         while(True):
-            os.system(CLEAR)
+            self.window_clear()
             # リスト内要素を結合して出力
             for num in self.main_window:
-                print(''.join(num))
+                self.print(''.join(num))
             
             # 座標入力メニュー
             flag: bool = self._matrix_input_menu(Game)
             
-            if not flag:
-                print("\n>>入力が間違っています")
-                time.sleep(TIME)
-            else:
+            if flag:
                 break
+            self.print("\n>>入力が間違っています")
+            self.sleep()
 
     # 座標入力メニュー
-    def _matrix_input_menu(self, Game) -> bool:
-        print("\n～メニュー～\n1: 旗を立てる\n2: マスを開放する")
-        select: str = input(":")
+    def _matrix_input_menu(self, Game:object) -> bool:
+        self.print("\n～メニュー～\n1: 旗を立てる\n2: マスを開放する")
+        which_menu: str = input(":")
         
-        if select.lower() == '1':
+        if which_menu.lower() == '1':
             Game.mode: int = 1
-        elif select. lower() == '2':
+        elif which_menu. lower() == '2':
             Game.mode: int = 2
         else:
             return False
@@ -116,7 +118,20 @@ class Window(object):
             # 座標情報セット
         Game.set_matrix(row, column)
         return True
-        
+
+    # 画面クリア
+    def window_clear(self):
+        os.system(CLEAR)
+
+    # スリープ
+    def sleep(self, t=TIME):
+        time.sleep(t)
+
+    # 表示
+    def print(self, text):
+        print(text)
         
 
-        
+class OutOfPredefinedNum(Exception):
+    pass     
+

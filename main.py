@@ -4,13 +4,15 @@
 
 
 from game.minesweeper import MineSweeper
-from game.window import Window, CLEAR, TIME
+from game.window import Window
+
 
 # ゲーム作成
 Game = MineSweeper()
 GW = Window()
 
-GW.explainment(Game)
+# ゲーム説明
+GW.explainment(Game.explainment)
 
 # ゲーム初期設定
 blc_num: iter = GW.setting()
