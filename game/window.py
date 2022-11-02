@@ -37,9 +37,9 @@ class Window(object):
                     raise OutOfPredefinedNum()
                 break
             except ValueError:
-                self.print("\n>>数字を入力してください")
+                self.print("\n>>数字を入力してください。")
             except OutOfPredefinedNum:
-                self.print("\n>>数字が既定の範囲外です")
+                self.print("\n>>数字が既定の範囲外です。")
             self.sleep()
 
         # ゲーム画面作成
@@ -82,20 +82,20 @@ class Window(object):
         while(True):
             self.window_clear()
             # リスト内要素を結合して出力
-            for num in self.main_window:
-                self.print(''.join(num))
+            for con in self.main_window:
+                self.print(''.join(con))
             
             # 座標入力メニュー
-            flag: bool = self._matrix_input_menu(Game)
+            f: bool = self._matrix_input_menu(Game)
             
-            if flag:
+            if f:
                 break
             self.print("\n>>入力が間違っています")
             self.sleep()
 
     # 座標入力メニュー
     def _matrix_input_menu(self, Game:object) -> bool:
-        self.print("\n～メニュー～\n1: 旗を立てる\n2: マスを開放する")
+        self.print("\n～メニュー～\n1: 旗を立てる/除ける\n2: マスを開放する")
         which_menu: str = input(":")
         
         if which_menu.lower() == '1':
@@ -112,11 +112,13 @@ class Window(object):
             mtr_list: list[str] = mtr.split(',')
             row: int = int(mtr_list[0]) # 行
             column: int = int(mtr_list[1]) # 列
-            if row > Game.blc_num or column > Game.blc_num:
+            if row <= 0 or row > Game.blc_num:
+                raise
+            if column <= 0 or column > Game.blc_num:
                 raise
         except:
             return False
-            # 座標情報セット
+        # 座標情報セット
         Game.set_matrix(row, column)
         return True
 
@@ -125,7 +127,8 @@ class Window(object):
         pass
 
     # ゲームオーバー
-    def game_over(self):
+    def game_over(self) -> None:
+        self.print("\n>>ゲームオーバー\n>>終了します")
         sys.exit()
 
     # 画面クリア
@@ -133,11 +136,11 @@ class Window(object):
         os.system(CLEAR)
 
     # スリープ
-    def sleep(self, t=TIME) -> None:
+    def sleep(self, t:int=TIME) -> None:
         time.sleep(t)
 
     # 表示
-    def print(self, text) -> None:
+    def print(self, text:str) -> None:
         print(text)
         
 

@@ -9,14 +9,18 @@ from game.window import Window
 
 # ゲーム作成
 Game = MineSweeper()
-GW = Window()
+GameWindow = Window()
 
 # ゲーム説明
-GW.explainment(Game.explainment)
+GameWindow.explainment(Game.explainment)
 
 # ゲーム開始:初期設定など
-Game.start(GW)
+Game.start(GameWindow)
 
 # ゲーム更新
-Game.update(GW)
+while(True):
+    f = Game.update(GameWindow)
+    GameWindow.sleep()
+    if f:
+        break
 
