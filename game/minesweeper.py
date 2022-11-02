@@ -139,15 +139,20 @@ class MineSweeper(object):
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = None    
 
     # 解放されたマスの周りを調べる
-    def _check_arround(self) -> int:
+    def _check_arround(self) -> None:
         arr: int = [-2, -1, 0]
         bomb_counter: int = 0
         for row in arr:
+            if self.mtr_row+row < 0: # 行が-1のとき弾く
+                continue
             for column in arr:
-                if row == -1 and column == -1:
+                if self.mtr_column+column < 0: # 列が-1のとき弾く
                     continue
-                if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is True:
-                    bomb_counter += 1
+                try:
+                    if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is True:
+                        bomb_counter += 1
+                except IndexError:
+                    continue
         if bomb_counter != 0:
             self.main_flag[self.mtr_row-1][self.mtr_column-1] = bomb_counter
 
