@@ -131,18 +131,25 @@ class Window(object):
         for i, row_list in enumerate(Game.main_flag):
             for j, column in enumerate(row_list):
                 print(f"{i} row, {j} column type :{type(column)}") ##################
+                space = "  "
+                if j == 0:
+                    space = " "
                 if column is True:
-                    self.main_window[i+add_row][j+add_column] = "  F"
+                    self.main_window[i+add_row][j+add_column] = "{}F".format(space)
                 elif column is False:
-                    self.main_window[i+add_row][j+add_column] = "  o"
+                    self.main_window[i+add_row][j+add_column] = "{}o".format(space)
                 elif column is None:
-                    self.main_window[i+add_row][j+add_column] = "   "
+                    self.main_window[i+add_row][j+add_column] = "{} ".format(space)
                 elif type(column) is int:
-                    self.main_window[i+add_row][j+add_column] = f"  {column}"
+                    self.main_window[i+add_row][j+add_column] = "{}{}".format(space, column)
                     
     # ゲームオーバー
     def game_over(self) -> None:
         self.print("\n>>ゲームオーバー\n>>終了します")
+        sys.exit()
+
+    def game_passed(self):
+        self.print("\n>>ゲームクリア\n>>終了します")
         sys.exit()
 
     # 画面クリア

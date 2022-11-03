@@ -78,6 +78,11 @@ class MineSweeper(object):
 
     # ゲーム更新
     def update(self, Window:object) -> None:
+        # ゲームクリアしたかチェック
+        is_passed: bool = self._check_game_is_passed()
+        if is_passed:
+            Window.game_passed()
+
         # 画面表示
         Window.show_window(self)
 
@@ -87,7 +92,7 @@ class MineSweeper(object):
             if f is None: # 既にマスが解放されているとき
                 Window.print("\n>>マスは既に解放されています。")
                 return
-                
+
             if not f: # 旗が立っていない時
                 self._post_flag()
                 Window.print("\n>>旗を立てました。")
@@ -108,7 +113,7 @@ class MineSweeper(object):
 
             self._release_block()
 
-        self._check_arround()
+            self._check_arround()
 
         Window.remake_window(self)
         
@@ -156,6 +161,19 @@ class MineSweeper(object):
                     continue
         if bomb_counter != 0: # 周りに爆弾があるとき
             self.main_flag[self.mtr_row-1][self.mtr_column-1] = bomb_counter
+
+    # ゲームクリアしたかチェック
+    def _check_game_is_passed(self) -> bool:
+        count = 0
+        for flag_row_list, bomb_row_list in zip(self.main_flag, self.main_bomb):
+            for flag_column, bomb_column in zip(flag_row_list, bomb_row_list):
+                if flag_column is True and bomb_column is True:
+                    count += 1
+        
+        if count == self.bomb_num:
+            return True
+
+        return False
 
 
 # テスト用
