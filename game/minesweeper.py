@@ -2,7 +2,7 @@ import random
 import copy
 
 
-# ゲーム処理
+# ゲーム処理クラス
 class MineSweeper(object):
     def __init__(self) -> None:
         self.explainment: str = '' # ゲーム説明文
@@ -11,6 +11,7 @@ class MineSweeper(object):
         self.main_bomb: list[bool] = [] # 爆弾の配置の二次元配列(爆弾のあるところはTrue、ないところはFalse)
         self.mode: int = 0 # 操作(1は旗立て、2はマス解放)
         self.bomb_num: int = 0 # 爆弾総数
+        self.flag_num: int = 0 # 旗総数
 
     # ゲームスタート:初期設定など
     def start(self, Window:object) -> None:
@@ -57,7 +58,7 @@ class MineSweeper(object):
             while(count < bombs):
                 # 爆弾の位置を一時的に保存
                 exc: list[int] = []
-                bomb_pos: int = random.randint(0, self.blc_num)
+                bomb_pos: int = random.randint(1, self.blc_num)
 
                 f: bool = False
                 for n in exc:
@@ -82,25 +83,23 @@ class MineSweeper(object):
 
         # 旗を立てるor除ける
         if self.mode == 1:
-            flag = self.main_flag[self.mtr_row-1][self.mtr_column-1]
-            if not flag: # 旗が立っていない時
-                self._post_flag()
-                Window.print("\n>>旗を立てました。")
-            elif flag: # 旗が既に立っているとき
-                self._remove_flag()
-                Window.print("\n>>旗を除けました。")
-            else: # マスが既に解放されてるとき
+            f: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
+            if f is None: # 既にマスが解放されているとき
                 Window.print("\n>>マスは既に解放されています。")
                 return
+                
+            if not f: # 旗が立っていない時
+                self._post_flag()
+                Window.print("\n>>旗を立てました。")
+            elif f: # 旗が既に立っているとき
+                self._remove_flag()
+                Window.print("\n>>旗を除けました。")
             
         # マス解放
         elif self.mode == 2:
-            flag = self.main_flag[self.mtr_row-1][self.mtr_column-1]
-            if flag: # 既に旗が立っているとき
+            f: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
+            if f: # 既に旗が立っているとき
                 Window.print("\n>>既に旗が立っています")
-                return
-            elif flag is None: # 既にマスが解放されているとき
-                Window.print("\n>>マスは既に解放されています。")
                 return
 
             # 爆弾に当たったか
@@ -109,18 +108,18 @@ class MineSweeper(object):
 
             self._release_block()
 
-            self._check_arround()
+        self._check_arround()
+
+        Window.remake_window(self)
         
-        print(self.mode)
-        print(self.mtr_row)
-        print(self.mtr_column)
-        print(' ')
-        print(Window.main_window)
-        print(' ')
-        print(self.main_flag)
-        print(' ')
-        print(self.main_bomb)
-        return True
+        print(f"Mode :{self.mode}")
+        print(f"Selected row :{self.mtr_row}")
+        print(f"Selected column :{self.mtr_column}")
+        print(f"\n{Window.main_window}")
+        print(f"\n{self.main_flag}")
+        print(f"\n{self.main_bomb}")
+
+        return False
 
     # 座標情報セット
     def set_matrix(self, row:int, column:int) -> None:
@@ -130,9 +129,11 @@ class MineSweeper(object):
     # 旗を立てる
     def _post_flag(self) -> None:
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = True
+        self.flag_num += 1
 
     def _remove_flag(self) -> None:
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
+        self.flag_num -= 1
 
     # マスを開放する
     def _release_block(self) -> None:
@@ -153,7 +154,7 @@ class MineSweeper(object):
                         bomb_counter += 1
                 except IndexError:
                     continue
-        if bomb_counter != 0:
+        if bomb_counter != 0: # 周りに爆弾があるとき
             self.main_flag[self.mtr_row-1][self.mtr_column-1] = bomb_counter
 
 
