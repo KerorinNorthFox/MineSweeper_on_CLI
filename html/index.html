@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8">
+        <title>【マインスイーパー】ゲーム説明</title>
+
+        <style>
+            html{
+                overflow-x: scroll; /*x方向にはスクロールする*/
+                overflow-y: hidden; /*y方向にはスクロールしない*/
+                min-width: 1500px; /*最小の大きさを指定することで水平スクロールバーが出てくる、htmlタグでやること*/
+            }
+            body{
+                background-color: lightblue;
+                overflow: hidden; /*スクロールバーが出てくるので禁止*/
+            }
+            h1, p{
+                white-space: nowrap; /*縮小しても改行しない*/
+            }
+            p{
+                font-size: 18px;
+            }
+            .background{
+                background-color: whitesmoke;
+                background-position: center;
+                margin: 15% 30%; /*marginは%で指定、ウィンドウを縮小しても対応できる*/
+                /* margin: 250px 600px 600px; */
+                text-align: center;
+                padding: 50px; /*周りの余白*/
+                min-width: 500px;
+            }
+            .ptext{
+                border: 2px solid black;
+                margin: auto 25%;
+                min-width: 250px;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>～ゲーム説明～</h1>
+    </body>
+</html>

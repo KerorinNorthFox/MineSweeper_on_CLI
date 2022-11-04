@@ -6,6 +6,8 @@ import copy
 class MineSweeper(object):
     def __init__(self) -> None:
         self.explainment: str = '' # ゲーム説明文
+        # self.first: bool = True
+        self.continue_num: int = 3
         self.blc_num: int = 0 # 縦横の配列の長さ
         self.main_flag: list[bool,int] = [] # 状態の二次元配列(解放されてないところはFalse、旗はTrue、解放されたところはNone)
         self.main_bomb: list[bool] = [] # 爆弾の配置の二次元配列(爆弾のあるところはTrue、ないところはFalse)
@@ -41,32 +43,32 @@ class MineSweeper(object):
         self.main_bomb: list[bool] = copy.deepcopy(self.main_flag)
 
         # 配列の長さによって爆弾の数を調整
-        blc_lim: list[int] = [7, 9, 11, 13, 15, 17, 20]
-        bomb_num: list[int] = [2, 3, 4, 5, 6, 7, 8]
-        for c, lim in enumerate(blc_lim):
+        blc_lim_list: list[int] = [7, 9, 11, 13, 15, 17, 20]
+        bomb_num_list: list[int] = [2, 3, 4, 5, 6, 7, 8]
+        for c, lim in enumerate(blc_lim_list):
             if self.blc_num <= lim:
-                i: int = bomb_num[c]
+                i: int = bomb_num_list[c]
                 break
 
         for num in range(self.blc_num):
             print(f"{num+1}列目") ########################################
-            bombs = random.randint(1, i)
-            self.bomb_num += bombs
-            print(f"爆弾数: {bombs}") ########################################
+            bomb_num = random.randint(1, i)
+            self.bomb_num += bomb_num
+            print(f"爆弾数: {bomb_num}") ########################################
 
             count: int = 0
-            while(count < bombs):
-                # 爆弾の位置を一時的に保存
-                exc: list[int] = []
+            # 爆弾の位置を一時的に保存
+            exc: list[int] = []
+            while(count < bomb_num):
                 bomb_pos: int = random.randint(1, self.blc_num)
 
-                f: bool = False
+                is_bomb_same_pos: bool = False
                 for n in exc:
                     # 爆弾の位置が被ってたらやり直し
                     if bomb_pos == n:
-                        f: bool = True
+                        is_bomb_same_pos: bool = True
                         break
-                if f:
+                if is_bomb_same_pos:
                     continue
 
                 exc.append(bomb_pos)
@@ -78,44 +80,69 @@ class MineSweeper(object):
 
     # ゲーム更新
     def update(self, Window:object) -> None:
-        # ゲームクリアしたかチェック
         is_passed: bool = self._check_game_is_passed()
-        if is_passed:
+        if is_passed: # ゲームクリアしたかチェック
+            Window.game_passed_animation(self)
             Window.game_passed()
 
         # 画面表示
         Window.show_window(self)
 
-        # 旗を立てるor除ける
+        # 旗を立てるor除ける時
         if self.mode == 1:
-            f: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
-            if f is None: # 既にマスが解放されているとき
+            flag_state: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
+            if flag_state is None or type(flag_state) is int: # 既にマスが解放されているとき
                 Window.print("\n>>マスは既に解放されています。")
                 return
-
-            if not f: # 旗が立っていない時
+            elif not flag_state: # 旗が立っていない時
+                if self.bomb_num-self.flag_num == 0:
+                    Window.print("\n>>旗は全て立っています。間違えているところがありませんか?")
+                    return
                 self._post_flag()
                 Window.print("\n>>旗を立てました。")
-            elif f: # 旗が既に立っているとき
+            elif flag_state: # 旗が既に立っているとき
                 self._remove_flag()
                 Window.print("\n>>旗を除けました。")
             
-        # マス解放
+        # マス解放の時
         elif self.mode == 2:
-            f: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
-            if f: # 既に旗が立っているとき
+            flag_state: bool = self.main_flag[self.mtr_row-1][self.mtr_column-1]
+            if flag_state: # 既に旗が立っているとき
                 Window.print("\n>>既に旗が立っています")
                 return
 
-            # 爆弾に当たったか
-            if self.main_bomb[self.mtr_row-1][self.mtr_column-1] is True:
-                Window.game_over()
+            if self.main_bomb[self.mtr_row-1][self.mtr_column-1] is True: # 爆弾に当たったか
+                if self.continue_num == 0:
+                    Window.game_over_animation(self)
+                    Window.game_over() # ゲームオーバー
+                
+                Window.print(f"\n>>爆弾が爆発!!")
+                Window.sleep(t=1)
+                while(True):
+                    Window.print(f"\n>>残りコンティニュー回数は{self.continue_num}回です")
+                    is_continue = input(">>コンティニューしますか?\ny :はい\nn :いいえ\n:")
+                    
+                    if is_continue == 'y':
+                        self.continue_num -= 1
+                        return False
+                    elif is_continue == 'n':
+                        Window.game_over_animation(self)
+                        Window.game_over()
+                    else:
+                        Window.print("\n>>入力が間違っています")
+                        Window.window_clear()
+                        Window.sleep()
+            
+            self._release_block() # マス解放
+            self._check_arround_blc() # マスの周りの爆弾を数える
 
-            self._release_block()
+            # if self.first:
+            #     print("\n最初") ##################
+            #     self._check_arround_if_first() # 最初の時マス周りの空白を空ける
+            #     self.first = False
 
-            self._check_arround()
-
-        Window.remake_window(self)
+        
+        Window.reflesh_window(self) # 画面再構築
         
         print(f"Mode :{self.mode}")
         print(f"Selected row :{self.mtr_row}")
@@ -126,45 +153,49 @@ class MineSweeper(object):
 
         return False
 
-    # 座標情報セット
+    # 座標情報をセットする: DONE
     def set_matrix(self, row:int, column:int) -> None:
         self.mtr_row: int = row # 行
         self.mtr_column: int = column # 列
         
-    # 旗を立てる
+    # 旗を立てる: DONE
     def _post_flag(self) -> None:
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = True
         self.flag_num += 1
 
+    # 旗を除ける: DONE
     def _remove_flag(self) -> None:
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = False
         self.flag_num -= 1
 
-    # マスを開放する
+    # マスを開放する: DONE
     def _release_block(self) -> None:
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = None    
 
-    # 解放されたマスの周りを調べる
-    def _check_arround(self) -> None:
-        arr: int = [-2, -1, 0]
+    # 解放されたマスの周りを調べる: DONE
+    def _check_arround_blc(self) -> None:
+        arr: list[int] = [-2, -1, 0]
         bomb_counter: int = 0
         for row in arr:
             if self.mtr_row+row < 0: # 行が-1のとき弾く
                 continue
+
             for column in arr:
                 if self.mtr_column+column < 0: # 列が-1のとき弾く
                     continue
+
                 try:
                     if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is True:
                         bomb_counter += 1
                 except IndexError:
                     continue
+
         if bomb_counter != 0: # 周りに爆弾があるとき
             self.main_flag[self.mtr_row-1][self.mtr_column-1] = bomb_counter
 
-    # ゲームクリアしたかチェック
+    # ゲームクリアしたかチェック: DONE
     def _check_game_is_passed(self) -> bool:
-        count = 0
+        count: int = 0
         for flag_row_list, bomb_row_list in zip(self.main_flag, self.main_bomb):
             for flag_column, bomb_column in zip(flag_row_list, bomb_row_list):
                 if flag_column is True and bomb_column is True:
@@ -174,6 +205,61 @@ class MineSweeper(object):
             return True
 
         return False
+
+    # 最初の時マス周りの空白を空ける
+    def _check_arround_if_first(self) -> None:
+        no_bomb_list_arround_mtr: list[tuple[int]] = []
+        arr: list[int] = [-2, 1, 0]
+        for row in arr:
+            if self.mtr_row+row < 0: # 行が-1のとき弾く
+                continue
+
+            for column in arr:
+                if self.mtr_column+column < 0: # 列が-1のとき弾く
+                    continue
+                f: bool = (row == -2 or row == 0) and (column == -2 or column == 0)
+                if f:
+                    continue
+
+                try:
+                    if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is False:
+                        print("きた")
+                        no_bomb_list_arround_mtr.append((self.mtr_row+row, self.mtr_column+column))
+                except IndexError:
+                    continue
+        
+        self._next_no_bomb_mtr(no_bomb_list_arround_mtr)
+
+    def _next_no_bomb_mtr(self, no_bomb_list_old:list[tuple[int]]):
+        # if no_bomb_list_old is None:
+        #     return None
+
+        no_bomb_arround_mtr: list[tuple[int]] = []
+        arr: list[int] = [-2, 1, 0]
+        count: int = 0
+        for yet in no_bomb_list_old:
+            for row in arr:
+                if yet[0]+row < 0: # 行が-1のとき弾く
+                    continue
+
+                for column in arr:
+                    if yet[1]+column < 0: # 列が-1のとき弾く
+                        continue
+                    f: bool = (row == -2 or row == 0) and (column == -2 or column == 0)
+                    if f:
+                        continue
+
+                    try:
+                        if self.main_bomb[yet[0]+row][yet[1]+column] is None:
+                            no_bomb_arround_mtr.append((yet[0]+row, yet[1]+column))
+                            count += 1
+                    except IndexError:
+                        continue
+        
+        if count == 0:
+            return
+
+        return self._next_no_bomb_mtr(no_bomb_arround_mtr)
 
 
 # テスト用
