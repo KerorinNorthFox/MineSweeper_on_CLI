@@ -83,17 +83,18 @@ class Window(object):
     def show_window(self, Game:object) -> None:
         while(True):
             self.window_clear()
-            self.print(f"残り爆弾数 :{Game.bomb_num-Game.flag_num}\n")
+            self.print(f">>残り爆弾数 :{Game.bomb_num-Game.flag_num}\n")
             # リスト内要素を結合して出力
             for con in self.main_window:
                 self.print(''.join(con))
             
             # 座標入力メニュー
-            f: bool = self._matrix_input_menu(Game)
+            is_input_succ, f = self._matrix_input_menu(Game)
             
-            if f: break
-
-            self.print("\n>>入力が間違っています")
+            if is_input_succ: break
+            
+            if not f:
+                self.print("\n>>入力が間違っています")
             self.sleep()
 
     # 座標入力メニュー
@@ -106,34 +107,38 @@ class Window(object):
         elif which_menu. lower() == '2':
             Game.mode: int = 2
         else:
-            return False
+            return False, True
 
-        mtr: str = input("\n>>行→列の順で数字の座標を入力してください(数字の間にはコンマを打つ): ")
+        self.print("\n>>行→列の順で数字の座標を入力してください(数字の間にはコンマを打つ)(戻るには\"c\"を入力してください)")
+        mtr: str = input(":")
         mtr: str = mtr.replace(' ', '')
+        if mtr == 'c':
+            return False, False
         
         try:
             mtr_list: list[str] = mtr.split(',')
             row: int = int(mtr_list[0]) # 行
             column: int = int(mtr_list[1]) # 列
-            is_safe: bool = 0 < row or row <= Game.blc_num or 0 < column or column <= Game.blc_num
+
+            is_safe: bool = 0 < row and row <= Game.blc_num and 0 < column and column <= Game.blc_num
             if not is_safe:
                 raise
         except:
-            return False
+            return False, True
         # 座標情報セット
         Game.set_matrix(row, column)
-        return True
+        return True, False
 
     # 画面再構築
-    def remake_window(self, Game:object) -> None:
+    def reflesh_window(self, Game:object) -> None:
         add_row: int = 2
         add_column: int = 2
         for i, row_list in enumerate(Game.main_flag):
             for j, column in enumerate(row_list):
-                print(f"{i} row, {j} column type :{type(column)}") ##################
                 space = "  "
                 if j == 0:
                     space = " "
+
                 if column is True:
                     self.main_window[i+add_row][j+add_column] = "{}F".format(space)
                 elif column is False:
@@ -145,12 +150,68 @@ class Window(object):
                     
     # ゲームオーバー
     def game_over(self) -> None:
-        self.print("\n>>ゲームオーバー\n>>終了します")
+        self.print("\n>>爆弾が爆発!!")
+        self.sleep(t=1)
+        self.print("\n>>ゲームオーバー")
+        self.sleep(t=1)
+        self.print("\n>>ゲームを終了します")
         sys.exit()
 
-    def game_passed(self):
-        self.print("\n>>ゲームクリア\n>>終了します")
+    # ゲームクリア
+    def game_passed(self) -> None:
+        self.print("\n>>ゲームクリア!!")
+        self.sleep(t=1)
+        self.print("\n>>ゲームを終了します")
         sys.exit()
+
+    def game_over_animation(self, Game:object) -> None:
+        window_list: list[str] = self._make_game_over_list(Game, '■')
+        
+        for _ in range(5):
+            self.window_clear()
+            self.sleep(t=0.5)
+            # リスト内要素を結合して出力
+            for con in window_list:
+                self.print(''.join(con), flush=True)
+            self.sleep(t=0.5)
+            
+    def game_passed_animation(self, Game:object) -> None:
+        window_list_black: list[str] = self._make_game_over_list(Game, '■')
+        window_list_white: list[str] = self._make_game_over_list(Game, '□')
+
+        for _ in range(3):
+            self.window_clear()
+            # リスト内要素を結合して出力
+            for con in window_list_black:
+                self.print(''.join(con), flush=True)
+            self.sleep(t=1)
+            self.window_clear()
+            for con in window_list_white:
+                self.print(''.join(con), flush=True)
+            self.sleep(t=1)
+
+    def _make_game_over_list(self, Game:object, t:str) -> list[str]:
+        sub_list_1: list[str] = [' '+t+t] # 1行目
+        sub_list_2: list[str] = [' '+t+t] # 2行目
+        window_list = []
+
+        for num in range(Game.blc_num):
+            sub_list_1.append("%2s" % t)
+            sub_list_1.append(' ')
+            sub_list_2.append(f' {t} ')
+        
+        window_list.append(sub_list_1)
+        window_list.append(sub_list_2)
+
+        # 3行目以降
+        for num in range(Game.blc_num):
+            sub_list_3: list[str] = []
+            sub_list_3.append("%2s" % t)
+            sub_list_3.append(t)
+            for _ in range(Game.blc_num):
+                sub_list_3.append(f' {t} ')
+            window_list.append(sub_list_3)
+        return window_list
 
     # 画面クリア
     def window_clear(self) -> None:
@@ -161,8 +222,8 @@ class Window(object):
         time.sleep(t)
 
     # 表示
-    def print(self, text:str, end:str='\n') -> None:
-        print(text, end=end)
+    def print(self, text:str, end:str='\n', flush=False) -> None:
+        print(text, end=end, flush=flush)
         
 
 class OutOfPredefinedNum(Exception):
