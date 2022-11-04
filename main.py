@@ -11,9 +11,6 @@ from game.window import Window
 Game = MineSweeper()
 GameWindow = Window()
 
-# ゲーム説明
-GameWindow.explainment(Game.explainment)
-
 # ゲーム開始:初期設定など
 Game.start(GameWindow)
 
