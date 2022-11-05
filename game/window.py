@@ -155,6 +155,7 @@ class Window(object):
         self.print("\n>>ゲームオーバー")
         self.sleep(t=1)
         self.print("\n>>ゲームを終了します")
+        _ = input("\n\n>>画面を閉じるにはEnterを押してください...")
         sys.exit()
 
     # ゲームクリア
@@ -162,6 +163,7 @@ class Window(object):
         self.print("\n>>ゲームクリア!!")
         self.sleep(t=1)
         self.print("\n>>ゲームを終了します")
+        _ = input("\n\n>>画面を閉じるにはEnterを押してください...")
         sys.exit()
 
     def game_over_animation(self, Game:object) -> None:
