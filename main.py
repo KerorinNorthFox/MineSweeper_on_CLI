@@ -12,7 +12,7 @@ Game = MineSweeper()
 GameWindow = Window()
 
 # ゲーム説明
-GameWindow.explainment(Game.explainment)
+GameWindow.explaining(Game.explaining)
 
 # ゲーム開始:初期設定など
 Game.start(GameWindow)

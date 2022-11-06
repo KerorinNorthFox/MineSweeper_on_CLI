@@ -13,7 +13,7 @@ class Window(object):
         self.main_window: list[str] = [] # 画面を表示するための二次元配列(解放されてないマス目は'o'で表示)
 
     # ゲーム説明
-    def explainment(self, exp:str) -> None:
+    def explaining(self, exp:str) -> None:
         while(True):
             self.window_clear()
             is_see_exp: str = input(">>ゲーム説明を見ますか?[y/n]: ")
@@ -89,9 +89,9 @@ class Window(object):
                 self.print(''.join(con))
             
             # 座標入力メニュー
-            is_input_succ, f = self._matrix_input_menu(Game)
+            is_input_success, f = self._matrix_input_menu(Game)
             
-            if is_input_succ: break
+            if is_input_success: break
             
             if not f:
                 self.print("\n>>入力が間違っています")
@@ -130,7 +130,7 @@ class Window(object):
         return True, False
 
     # 画面再構築
-    def reflesh_window(self, Game:object) -> None:
+    def refresh_window(self, Game:object) -> None:
         add_row: int = 2
         add_column: int = 2
         for i, row_list in enumerate(Game.main_flag):
@@ -155,6 +155,7 @@ class Window(object):
         self.print("\n>>ゲームオーバー")
         self.sleep(t=1)
         self.print("\n>>ゲームを終了します")
+        _ = input("\n\n>>画面を閉じるにはEnterを押してください...")
         sys.exit()
 
     # ゲームクリア
@@ -162,6 +163,7 @@ class Window(object):
         self.print("\n>>ゲームクリア!!")
         self.sleep(t=1)
         self.print("\n>>ゲームを終了します")
+        _ = input("\n\n>>画面を閉じるにはEnterを押してください...")
         sys.exit()
 
     def game_over_animation(self, Game:object) -> None:

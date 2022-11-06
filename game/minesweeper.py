@@ -5,7 +5,7 @@ import copy
 # ゲーム処理クラス
 class MineSweeper(object):
     def __init__(self) -> None:
-        self.explainment: str = '' # ゲーム説明文
+        self.explaining: str = '' # ゲーム説明文
         # self.first: bool = True
         self.continue_num: int = 3
         self.blc_num: int = 0 # 縦横の配列の長さ
@@ -134,15 +134,16 @@ class MineSweeper(object):
                         Window.sleep()
             
             self._release_block() # マス解放
-            self._check_arround_blc() # マスの周りの爆弾を数える
+            Window.print("\n>>マスを解放しました")
+            self._check_around_blc() # マスの周りの爆弾を数える
 
             # if self.first:
             #     print("\n最初") ##################
-            #     self._check_arround_if_first() # 最初の時マス周りの空白を空ける
+            #     self._check_around_if_first() # 最初の時マス周りの空白を空ける
             #     self.first = False
 
         
-        Window.reflesh_window(self) # 画面再構築
+        Window.refresh_window(self) # 画面再構築
         
         print(f"Mode :{self.mode}")
         print(f"Selected row :{self.mtr_row}")
@@ -173,7 +174,7 @@ class MineSweeper(object):
         self.main_flag[self.mtr_row-1][self.mtr_column-1] = None    
 
     # 解放されたマスの周りを調べる: DONE
-    def _check_arround_blc(self) -> None:
+    def _check_around_blc(self) -> None:
         arr: list[int] = [-2, -1, 0]
         bomb_counter: int = 0
         for row in arr:
@@ -207,8 +208,8 @@ class MineSweeper(object):
         return False
 
     # 最初の時マス周りの空白を空ける
-    def _check_arround_if_first(self) -> None:
-        no_bomb_list_arround_mtr: list[tuple[int]] = []
+    def _check_around_if_first(self) -> None:
+        no_bomb_list_around_mtr: list[tuple[int]] = []
         arr: list[int] = [-2, 1, 0]
         for row in arr:
             if self.mtr_row+row < 0: # 行が-1のとき弾く
@@ -224,17 +225,17 @@ class MineSweeper(object):
                 try:
                     if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is False:
                         print("きた")
-                        no_bomb_list_arround_mtr.append((self.mtr_row+row, self.mtr_column+column))
+                        no_bomb_list_around_mtr.append((self.mtr_row+row, self.mtr_column+column))
                 except IndexError:
                     continue
         
-        self._next_no_bomb_mtr(no_bomb_list_arround_mtr)
+        self._next_no_bomb_mtr(no_bomb_list_around_mtr)
 
     def _next_no_bomb_mtr(self, no_bomb_list_old:list[tuple[int]]):
         # if no_bomb_list_old is None:
         #     return None
 
-        no_bomb_arround_mtr: list[tuple[int]] = []
+        no_bomb_around_mtr: list[tuple[int]] = []
         arr: list[int] = [-2, 1, 0]
         count: int = 0
         for yet in no_bomb_list_old:
@@ -251,7 +252,7 @@ class MineSweeper(object):
 
                     try:
                         if self.main_bomb[yet[0]+row][yet[1]+column] is None:
-                            no_bomb_arround_mtr.append((yet[0]+row, yet[1]+column))
+                            no_bomb_around_mtr.append((yet[0]+row, yet[1]+column))
                             count += 1
                     except IndexError:
                         continue
@@ -259,7 +260,7 @@ class MineSweeper(object):
         if count == 0:
             return
 
-        return self._next_no_bomb_mtr(no_bomb_arround_mtr)
+        return self._next_no_bomb_mtr(no_bomb_around_mtr)
 
 
 # テスト用
