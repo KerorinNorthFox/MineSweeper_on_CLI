@@ -51,10 +51,8 @@ class MineSweeper(object):
                 break
 
         for num in range(self.blc_num):
-            print(f"{num+1}列目") ########################################
             bomb_num = random.randint(1, i)
             self.bomb_num += bomb_num
-            print(f"爆弾数: {bomb_num}") ########################################
 
             count: int = 0
             # 爆弾の位置を一時的に保存
@@ -73,7 +71,6 @@ class MineSweeper(object):
 
                 exc.append(bomb_pos)
 
-                print(f"爆弾位置: {bomb_pos}") ########################################
                 self.main_bomb[num][bomb_pos-1] = True
 
                 count += 1
@@ -144,13 +141,6 @@ class MineSweeper(object):
 
         
         Window.refresh_window(self) # 画面再構築
-        
-        print(f"Mode :{self.mode}")
-        print(f"Selected row :{self.mtr_row}")
-        print(f"Selected column :{self.mtr_column}")
-        print(f"\n{Window.main_window}")
-        print(f"\n{self.main_flag}")
-        print(f"\n{self.main_bomb}")
 
         return False
 
@@ -224,7 +214,6 @@ class MineSweeper(object):
 
                 try:
                     if self.main_bomb[self.mtr_row+row][self.mtr_column+column] is False:
-                        print("きた")
                         no_bomb_list_around_mtr.append((self.mtr_row+row, self.mtr_column+column))
                 except IndexError:
                     continue
