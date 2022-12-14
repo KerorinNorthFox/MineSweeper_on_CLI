@@ -1,4 +1,4 @@
-# CLI MINESWEEPER
+# CLI MineSweeper
 CLI上でマインスイーパーを遊ぶ
 
 ## Requirement
