@@ -4,16 +4,15 @@ import copy
 
 # ゲーム処理クラス
 class MineSweeper(object):
-    def __init__(self) -> None:
-        self.explaining: str = '' # ゲーム説明文
-        # self.first: bool = True
-        self.continue_num: int = 3
-        self.blc_num: int = 0 # 縦横の配列の長さ
-        self.main_flag: list[bool,int] = [] # 状態の二次元配列(解放されてないところはFalse、旗はTrue、解放されたところはNone)
-        self.main_bomb: list[bool] = [] # 爆弾の配置の二次元配列(爆弾のあるところはTrue、ないところはFalse)
-        self.mode: int = 0 # 操作(1は旗立て、2はマス解放)
-        self.bomb_num: int = 0 # 爆弾総数
-        self.flag_num: int = 0 # 旗総数
+    explaining: str = '' # ゲーム説明文
+    # first: bool = True
+    continue_num: int = 3
+    blc_num: int = 0 # 縦横の配列の長さ
+    main_flag: list[bool,int] = [] # 状態の二次元配列(解放されてないところはFalse、旗はTrue、解放されたところはNone)
+    main_bomb: list[bool] = [] # 爆弾の配置の二次元配列(爆弾のあるところはTrue、ないところはFalse)
+    mode: int = 0 # 操作(1は旗立て、2はマス解放)
+    bomb_num: int = 0 # 爆弾総数
+    flag_num: int = 0 # 旗総数
 
     # ゲームスタート:初期設定など
     def start(self, Window:object) -> None:
