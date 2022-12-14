@@ -9,8 +9,7 @@ TIME: int = 2
 
 # ゲーム画面クラス
 class Window(object):
-    def __init__(self):
-        self.main_window: list[str] = [] # 画面を表示するための二次元配列(解放されてないマス目は'o'で表示)
+    main_window: list[str] = [] # 画面を表示するための二次元配列(解放されてないマス目は'o'で表示)
 
     # ゲーム説明
     def explaining(self, exp:str) -> None:
