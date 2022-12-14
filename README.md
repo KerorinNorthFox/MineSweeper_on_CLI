@@ -7,7 +7,9 @@ CLI上でマインスイーパーを遊ぶ
 ## Usage
 ```bash
 $ git clone git@github.com:KerorinNorthFox/MineSweeper_on_CLI.git # 自分の環境に持ってくる
+
 $ cd MineSweeper_on_CLI # ディレクトリ移動
+
 $ python main.py # ゲーム起動!!
 ```
 これだけ
