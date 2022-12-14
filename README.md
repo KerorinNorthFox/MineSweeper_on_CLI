@@ -3,6 +3,7 @@ CLI上でマインスイーパーを遊ぶ
 
 ## Requirement
 - Python3.8 ~ latest version
+
 これだけ
 ## Usage
 ```bash
