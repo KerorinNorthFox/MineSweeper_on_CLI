@@ -13,12 +13,22 @@ const
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
 
+type CursorPos = ref object
+  cursorXPos: int
+  cursorYPos: int
+  oldCursorXPos: int
+  oldCursorYPos: int
+
+proc init(_:type CursorPos): CursorPos =
+  result = CursorPos()
+  result.cursorXPos = 0
+  result.cursorYPos = 0
+  result.oldCursorXPos = 0
+  result.oldCursorYPos = 0
+
 var
   tb: TerminalBuffer
-  cursorXPos: int = 0
-  cursorYPos: int = 0
-  oldCursorXPos: int = 0
-  oldCursorYPos: int = 0
+  cursor: CursorPos = CursorPos.init()
 
 proc concatSeq(stringSeq:seq[string]): string =
   var text: string = ""
@@ -210,48 +220,51 @@ proc showWindow(self:MineSweeper): void =
   for i, line in lines.otherLines:
     tb.write(0, 2+i, line)
 
-  tb.drawRect(60, 1, 100, 5)
-  tb.write(62, 3, "Write the explaination here")
+  tb.drawRect((self.blcNum*2)+5, 1, (self.blcNum*2)+45, 5)
+  tb.write((self.blcNum*2)+7, 3, "Write the explaination here")
 
   tb.display()
 
 proc updateCursorPos(): void =
-  oldCursorYPos = cursorYPos
-  oldCursorXPos = cursorXPos
+  cursor.oldCursorYPos = cursor.cursorYPos
+  cursor.oldCursorXPos = cursor.cursorXPos
 
 proc moveCursor(self:MineSweeper): void =
   while(true):
-    tb.resetAttributes()
-    tb.setBackgroundColor(bgNone)
-    tb.write(1, 25, "cursorXPos:", $cursorXPos, ", cursorYPos:", $cursorYPos, ", oldCursorXPos:", $oldCursorXPos, ", oldCursorYPos:", $oldCursorYPos)
-    tb.write(4+(oldCursorXPos*2), 2+oldCursorYPos, self.blocksSeq[oldCursorYPos*self.blcNum+oldCursorXPos].status)
+    tb.write(1, 25, " ".repeat(100))
+    tb.write(1, 25, "cursorXPos:", $cursor.cursorXPos, ", cursorYPos:", $cursor.cursorYPos, ", oldCursorXPos:", $cursor.oldCursorXPos, ", oldCursorYPos:", $cursor.oldCursorYPos)
+
+    tb.write(4+(cursor.oldCursorXPos*2), 2+cursor.oldCursorYPos, self.blocksSeq[cursor.oldCursorYPos*self.blcNum+cursor.oldCursorXPos].status)
     tb.setBackgroundColor(bgWhite)
-    tb.write(4+(cursorXPos*2), 2+cursorYPos, self.blocksSeq[cursorYPos*self.blcNum+cursorXPos].status)
+    tb.setForegroundColor(fgBlack)
+    tb.write(4+(cursor.cursorXPos*2), 2+cursor.cursorYPos, self.blocksSeq[cursor.cursorYPos*self.blcNum+cursor.cursorXPos].status)
+    tb.resetAttributes()
     tb.display()
     sleep(20)
+
 
     let key = getKey()
     case key
     of Key.Up:
-      if cursorYPos == 0:
+      if cursor.cursorYPos == 0:
         continue
       updateCursorPos()
-      cursorYPos.dec()
+      cursor.cursorYPos.dec()
     of Key.Down:
-      if cursorYPos == self.blcNum-1:
+      if cursor.cursorYPos == self.blcNum-1:
         continue
       updateCursorPos()
-      cursorYPos.inc()
+      cursor.cursorYPos.inc()
     of Key.Right:
-      if cursorXPos == self.blcNum-1:
+      if cursor.cursorXPos == self.blcNum-1:
         continue
       updateCursorPos()
-      cursorXPos.inc()
+      cursor.cursorXPos.inc()
     of Key.Left:
-      if cursorXPos == 0:
+      if cursor.cursorXPos == 0:
         continue
       updateCursorPos()
-      cursorXPos.dec()
+      cursor.cursorXPos.dec()
     else:
       discard
 
