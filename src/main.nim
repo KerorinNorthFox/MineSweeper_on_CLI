@@ -17,5 +17,7 @@ proc main(): void =
   # minesweeper初期化
   var game = MineSweeper.init(tb)
 
+  game.update()
+
 when isMainModule:
   main()
