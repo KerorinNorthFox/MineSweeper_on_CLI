@@ -11,13 +11,14 @@ proc main(): void =
   illwillInit(fullscreen=true)
   setControlCHook(exitProc)
   hideCursor()
-
   # illwillの画面作成
   var tb: TerminalBuffer = newTerminalBuffer(terminalWidth(), terminalHeight())
   # minesweeper初期化
   var game = MineSweeper.init(tb)
 
-  game.update()
+  game.start()
+  while(true):
+    game.update()
 
 when isMainModule:
   main()
