@@ -28,10 +28,10 @@ type MainWindow = ref object
   oldCursorXPos: int
   oldCursorYPos: int
 
-proc init(_:type MainWindow, xPos, yPos: int): MainWindow =
+proc init(_:type MainWindow): MainWindow =
   result = MainWindow()
-  result.xPos = xPos
-  result.yPos = yPos
+  result.xPos = 0
+  result.yPos = 0
   result.cursorXPos = 0
   result.cursorYPos = 0
   result.oldCursorXPos = 0
@@ -42,7 +42,28 @@ type MenuWindow = ref object
   yPos: int
   xPosE: int
   yPosE: int
+  separatorYPos: int
+  firstChoiceYPos: int
+  firstChoiceText: string
+  secondChoiceText: string
+  secondChoiceYPos: int
+  cursorPositionYPos: int
+  totalFlagYPos: int
   mode: int
+
+proc init(_:type MenuWindow): MenuWindow =
+  result = MenuWindow()
+  result.xPos = 5
+  result.yPos = 1
+  result.xPosE = 45
+  result.yPosE = 7
+  result.separatorYPos = 3
+  result.firstChoiceYPos = 4
+  result.firstChoiceText = "Set/Remove a flag"
+  result.secondChoiceYPos=5
+  result.secondChoiceText = "Open the cell"
+  result.cursorPositionYPos = 1
+  result.totalFlagYPos = 2
 
 type InstructionsWindow = ref object
   xPos: int
@@ -50,12 +71,19 @@ type InstructionsWindow = ref object
   xPosE: int
   yPosE: int
 
+proc init(_:type InstructionsWindow): InstructionsWindow =
+  result = InstructionsWindow()
+  result.xPos = 5
+  result.yPos = 8
+  result.xPosE = 45
+  result.yPosE = 20
+
 var
   tb: TerminalBuffer
   game: MineSweeper
-  mainWindow: MainWindow = MainWindow.init(xPos=0, yPos=0)
-  menuWindow: MenuWindow = MenuWindow(xPos:5, yPos:1, xPosE:45, yPosE:6)
-  instructionsWindow: InstructionsWindow = InstructionsWindow(xPos:5, yPos:7, xPosE:45, yPosE:20)
+  mainWindow: MainWindow = MainWindow.init()
+  menuWindow: MenuWindow = MenuWindow.init()
+  instructionsWindow: InstructionsWindow = InstructionsWindow.init()
 
 # stringのseqの内容を繋げる
 proc concatSeq(stringSeq:seq[string]): string =
@@ -233,16 +261,16 @@ proc draw(self:MenuWindow): void =
   tb.resetAttributes()
   let d: int = game.doubleBlcNum
   tb.drawRect(d+self.xPos, self.yPos, d+self.xPosE, self.yPosE)
-  tb.drawHorizLine(d+self.xPos+2, d+self.xPosE-1, self.yPos+2, doubleStyle=true)
-  tb.write(d+self.xPos+4, self.yPos+3, "Set/Remove a flag")
-  tb.write(d+self.xPos+4, self.yPos+4, "Open the cell")
+  tb.drawHorizLine(d+self.xPos+2, d+self.xPosE-1, self.yPos+self.separatorYPos, doubleStyle=true)
+  tb.write(d+self.xPos+4, self.yPos+self.firstChoiceYPos, self.firstChoiceText)
+  tb.write(d+self.xPos+4, self.yPos+self.secondChoiceYPos, self.secondChoiceText)
 
 # 指示画面を描画
 proc draw(self:InstructionsWindow): void =
   tb.resetAttributes()
   let d: int = game.doubleBlcNum
   tb.drawRect(d+self.xPos, self.yPos, d+self.xPosE, self.yPosE)
-  tb.write(d+self.xPos+2, self.yPos+1, "Instructions")
+  tb.write(d+self.xPos+2, self.yPos+1, "Available actions")
   tb.drawHorizLine(d+self.xPos+2, d+self.xPosE-1, self.yPos+2, doubleStyle=true)
 
 # 画面表示
@@ -267,6 +295,12 @@ proc start*(self:MineSweeper): void =
 
   self.showWindow()
 
+proc drawTotalBomb(self:MenuWindow): void =
+  let d = game.doubleBlcNum
+  tb.write(d+self.xPos+2, self.yPos+self.totalFlagYPos, " ".repeat(menuWindow.xPosE-menuWindow.xPos-2))
+  tb.write(d+self.xPos+2, self.yPos+self.totalFlagYPos, "Total flags :", game.totalFlag.`$`)
+  tb.display()
+
 # メイン画面の古いカーソル位置を更新
 proc updateOldCursorPos(self:MainWindow): void =
   self.oldCursorYPos = self.cursorYPos
@@ -274,8 +308,11 @@ proc updateOldCursorPos(self:MainWindow): void =
 
 # メニュー画面にカーソル座標を描画更新
 proc updateMenuCursorPos(self:MainWindow): void =
-  tb.write(game.doubleBlcNum+7, 2, " ".repeat(36))
-  tb.write(game.doubleBlcNum+7, 2, "Cursor position :", chr(64+self.cursorXPos+1).`$`,$(self.cursorYPos+1))
+  let d = game.doubleBlcNum
+  let m = menuWindow
+  tb.write(d+m.xPos+2, m.yPos+m.cursorPositionYPos, " ".repeat(m.xPosE-m.xPos-2))
+  tb.write(d+m.xPos+2, m.yPos+m.cursorPositionYPos, "Cursor position :", chr(64+self.cursorXPos+1).`$`,$(self.cursorYPos+1))
+  tb.display()
 
 proc showCursorPosDebug(): void =
   tb.write(1, 25, " ".repeat(100))
@@ -328,10 +365,10 @@ proc moveCursor(self:MainWindow): void =
 # メニュー画面にカーソル描画
 proc drawCursor(self:MenuWindow, reset:bool=false): void =
   let d: int = game.doubleBlcNum
-  tb.write(d+self.xPos+2, self.yPos+3, " ")
-  tb.write(d+self.xPos+2, self.yPos+4, " ")
+  tb.write(d+self.xPos+2, self.yPos+self.firstChoiceYPos, " ")
+  tb.write(d+self.xPos+2, self.yPos+self.secondChoiceYPos, " ")
   if not reset:
-    tb.write(d+self.xPos+2, self.yPos+3+self.mode, ">")
+    tb.write(d+self.xPos+2, self.yPos+self.firstChoiceYPos+self.mode, ">")
   tb.display()
 
 # メニュー画面でカーソル移動
@@ -359,6 +396,7 @@ proc selectChoices(self:MenuWindow): bool =
   return false
 
 proc update*(self:MineSweeper): void =
+  menuWindow.drawTotalBomb()
   mainWindow.moveCursor()
   let isAbort: bool = menuWindow.selectChoices()
   if isAbort:
