@@ -50,6 +50,7 @@ type MenuWindow = ref object
   yPosE: int
   totalFlagText: string
   cursorPositionText: string
+  remainingContinueText: string
   separatorYPos: int
   firstChoiceYPos: int
   firstChoiceText: string
@@ -57,6 +58,7 @@ type MenuWindow = ref object
   secondChoiceYPos: int
   cursorPositionYPos: int
   totalFlagYPos: int
+  remainingContinueYPos: int
   mode: int
 
 proc init(_:type MenuWindow): MenuWindow =
@@ -64,16 +66,18 @@ proc init(_:type MenuWindow): MenuWindow =
   result.xPos = 5
   result.yPos = 1
   result.xPosE = 45
-  result.yPosE = 7
+  result.yPosE = 8
   result.totalFlagText = "Total flags :"
   result.cursorPositionText = "Cursor position :"
-  result.separatorYPos = 3
-  result.firstChoiceYPos = 4
-  result.firstChoiceText = "Set/Remove a flag"
-  result.secondChoiceYPos=5
+  result.remainingContinueText = "Remaining continue :"
+  result.separatorYPos = 4
+  result.firstChoiceYPos = 5
+  result.firstChoiceText = "Set/Remove the flag"
+  result.secondChoiceYPos=6
   result.secondChoiceText = "Open the cell"
   result.cursorPositionYPos = 1
   result.totalFlagYPos = 2
+  result.remainingContinueYPos = 3
 
 type InstructionsWindow = ref object
   xPos: int
@@ -190,6 +194,7 @@ proc setBombs(self:MineSweeper): void =
       break
   
   var lineNum: int = 0
+  # randomize()
   for i in 0..<self.blcNum: # 行数分回す
     let bombNumPerLine: int  = rand(1..howManyBombPerLine)
     self.totalBomb += bombNumPerLine
@@ -220,12 +225,12 @@ proc setting(self:MineSweeper): void =
   self.totalFlag = 0
   self.continueNum = 3
 
-proc showDebug(): void =
-  clearTerminal()
-  echo "totalBomb :", game.totalBomb
-  for a in game.blocksSeq:
-    echo "y:", a.y, ", x:", a.x, ", isBomb:", a.isBomb, ", isFlag:", a.isFlag, ", satus:", a.status
-  echo "blocksSeq.len:", game.blocksSeq.len
+# proc showDebug(): void =
+#   clearTerminal()
+#   echo "totalBomb :", game.totalBomb
+#   for a in game.blocksSeq:
+#     echo "y:", a.y, ", x:", a.x, ", isBomb:", a.isBomb, ", isFlag:", a.isFlag, ", satus:", a.status
+#   echo "blocksSeq.len:", game.blocksSeq.len
 
 proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer): MineSweeper =
   tb = terminalbuffer
@@ -275,6 +280,12 @@ proc draw(self:MainWindow): void =
   for i, line in lines.otherLines:
     tb.write(self.xPos, self.yPos+2+i, line)
 
+proc drawChoice(self:MenuWindow, xPos, yPos: int, firstText, secondText: string): void =
+  tb.write(xPos+4, yPos+self.firstChoiceYPos, " ".repeat(len(self.firstChoiceText)))
+  tb.write(xPos+4, yPos+self.secondChoiceYPos, " ".repeat(len(self.secondChoiceText)))
+  tb.write(xPos+4, yPos+self.firstChoiceYPos, firstText)
+  tb.write(xPos+4, yPos+self.secondChoiceYPos, secondText)
+
 # メニュー画面を描画
 proc draw(self:MenuWindow): void =
   tb.resetAttributes()
@@ -284,9 +295,9 @@ proc draw(self:MenuWindow): void =
   tb.drawRect(xPos, yPos, d+self.xPosE, self.yPosE)
   tb.write(xPos+2, yPos+self.totalFlagYPos, self.totalFlagText)
   tb.write(xPos+2, yPos+self.cursorPositionYPos, self.cursorPositionText)
+  tb.write(xPos+2, yPos+self.remainingContinueYPos, self.remainingContinueText)
   tb.drawHorizLine(xPos+2, d+self.xPosE-1, yPos+self.separatorYPos, doubleStyle=true)
-  tb.write(xPos+4, yPos+self.firstChoiceYPos, self.firstChoiceText)
-  tb.write(xPos+4, yPos+self.secondChoiceYPos, self.secondChoiceText)
+  self.drawChoice(xPos, yPos, self.firstChoiceText, self.secondChoiceText)
 
 # 指示画面を描画
 proc draw(self:InstructionsWindow): void =
@@ -327,6 +338,7 @@ proc start*(self:MineSweeper): void =
 
   self.drawWindow()
 
+##########################################################
 # MessageWindowリセット
 proc resetMsg(self:MessageWindow): void =
   tb.resetAttributes()
@@ -351,6 +363,7 @@ proc resetActions(self:InstructionsWindow): void =
 
 # 指示画面に描画
 proc drawActions(self:InstructionsWindow, actions:seq[string]): void =
+  tb.resetAttributes()
   self.resetActions()
   let
     d: int = game.doubleBlcNum
@@ -371,13 +384,48 @@ proc checkGamePassed(self:MineSweeper): bool =
         return false
   return true
 
-# ゲームクリア処理
-proc passed(self:MineSweeper): void =
-  discard
+proc gameOverAnimation(self:MainWindow): void =
+  for i in 1..3:
+    tb.setBackgroundColor(bgWhite)
+    tb.setForegroundColor(fgBlack)
+    tb.write(4+(self.cursorXPos*2), 2+self.cursorYPos, "B")
+    tb.display()
+    sleep(800)
+    tb.resetAttributes()
+    tb.write(4+(self.cursorXPos*2), 2+self.cursorYPos, "B")
+    tb.display()
+    sleep(800)
 
-# ゲームオーバー処理
-proc gameOver(self:MineSweeper): void =
-  discard
+proc drawBomb(self:MainWindow, i:int): void =
+  if i >= game.blcNum*game.blcNum:
+    return
+  var
+    xPos: int = (i mod game.blcNum)*2
+    xPosHalf: int = xPos div 2
+    yPos: int = i div game.blcNum
+  tb.resetAttributes()
+  tb.write(4+xPos, 2+yPos, " ")
+  if game.blocksSeq[yPos*game.blcNum+xPosHalf].isBomb:
+    tb.write(4+xPos, 2+yPos, "B")
+  tb.display()
+
+# ゲームクリア処理
+proc endGame(self:MineSweeper): void =
+  let actions: seq[string] = @[
+    "Enter key : Exit the game",
+    "Ctrl+c : Exit the game"
+  ]
+  var counter: int = 0
+  instructionsWindow.drawActions(actions)
+  while(true):
+    mainWindow.drawBomb(counter)
+    sleep(90 - (self.blcNum*4))
+    counter.inc()
+    let key = getKey()
+    case key
+    of Key.Enter:
+      break
+    else: discard
 
 # 残りの旗数をメニュー画面に描画
 proc drawRemainingFlag(self:MenuWindow): void =
@@ -387,6 +435,16 @@ proc drawRemainingFlag(self:MenuWindow): void =
   tb.resetAttributes()
   tb.write(xPos, yPos, " ".repeat(3))
   tb.write(xPos, yPos, $(game.totalBomb-game.totalFlag))
+  tb.display()
+
+# 残りのコンティニュー回数をメニュー画面に描画
+proc drawRemainingContinue(self:MenuWindow): void =
+  let
+    xPos: int = game.doubleBlcNum+self.xPos+2+len(self.remainingContinueText)
+    yPos: int = self.yPos+self.remainingContinueYPos
+  tb.resetAttributes()
+  tb.write(xPos, yPos, " ".repeat(3))
+  tb.write(xPos, yPos, $(game.continueNum))
   tb.display()
 
 # カーソル位置をメニュー画面に描画
@@ -404,9 +462,9 @@ proc updateOldCursorPos(self:MainWindow): void =
   self.oldCursorYPos = self.cursorYPos
   self.oldCursorXPos = self.cursorXPos
 
-proc showCursorPosDebug(): void =
-  tb.write(1, 30, " ".repeat(100))
-  tb.write(1, 30, "cursorXPos:", $mainWindow.cursorXPos, ", cursorYPos:", $mainWindow.cursorYPos, ", oldCursorXPos:", $mainWindow.oldCursorXPos, ", oldCursorYPos:", $mainWindow.oldCursorYPos)
+# proc showCursorPosDebug(): void =
+#   tb.write(1, 30, " ".repeat(100))
+#   tb.write(1, 30, "cursorXPos:", $mainWindow.cursorXPos, ", cursorYPos:", $mainWindow.cursorYPos, ", oldCursorXPos:", $mainWindow.oldCursorXPos, ", oldCursorYPos:", $mainWindow.oldCursorYPos)
 
 # メイン画面にカーソル描画
 proc drawCursor(self:MainWindow): void =
@@ -427,8 +485,7 @@ proc moveCursor(self:MainWindow): void =
     ]
   instructionsWindow.drawActions(actions)
   while(true):
-    showCursorPosDebug()
-
+    # showCursorPosDebug()
     
     self.drawCursor()
     sleep(20)
@@ -503,7 +560,36 @@ proc selectChoices(self:MenuWindow): bool =
   return false
 
 proc selectContinue(self:MenuWindow): bool =
-  discard
+  let actions: seq[string] = @[
+    "Arrow Key[Up,Down] : Select choices",
+    "JK Key : Select choices",
+    "Enter key : Decide a choice",
+    "Ctrl+c : Exit the game"
+  ]
+  instructionsWindow.drawActions(actions)
+  self.drawChoice(game.doubleBlcNum+self.xPos, self.yPos, "Yes", "No")
+  msgWindow.drawMsg("Do you want to continue?")
+  self.mode = 0
+  while(true):
+    self.drawCursor()
+    sleep(20)
+
+    let key = getKey()
+    case key
+    of Key.Enter:
+      break
+    of Key.Up, Key.Down, Key.K, Key.J:
+      if self.mode == 0:
+        self.mode = 1
+      elif self.mode == 1:
+        self.mode = 0
+    else: discard
+
+  self.drawCursor(reset=true)
+  self.drawChoice(game.doubleBlcNum+self.xPos, self.yPos, self.firstChoiceText, self.secondChoiceText)
+  if self.mode == 0:
+    return true
+  return false
 
 proc setFlag(self:MineSweeper, pos:int): void =
   self.blocksSeq[pos].isFlag = true
@@ -547,10 +633,12 @@ proc checkAroundBomb(self:MineSweeper, pos:int): void =
 proc update*(self:MineSweeper): bool =
   let isPassed: bool = self.checkGamePassed()
   if isPassed:
-    self.passed()
-    return true # TODO: ゲーム終了処理
+    msgWindow.drawMsg("GAME CLEAR!!")
+    self.endGame()
+    return true
 
   menuWindow.drawRemainingFlag()
+  menuWindow.drawRemainingContinue()
   mainWindow.moveCursor()
   let isAbort: bool = menuWindow.selectChoices()
   msgWindow.resetMsg()
@@ -594,10 +682,15 @@ proc update*(self:MineSweeper): bool =
       if self.continueNum != 0:
         isContinue = menuWindow.selectContinue()
       if isContinue:
+        msgWindow.resetMsg()
         self.continueNum.dec()
         return false
 
-      self.gameOver()
+      tb.setForegroundColor(fgRed)
+      msgWindow.drawMsg("Boom!!")
+      instructionsWindow.resetActions()
+      mainWindow.gameOverAnimation()
+      self.endGame()
       return true
 
     self.checkAroundBomb(blocksSeqPos)
