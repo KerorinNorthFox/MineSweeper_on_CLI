@@ -614,10 +614,12 @@ proc checkAroundBomb(self:MineSweeper, pos:int): void =
   let around: array[3,int] = [-1, 0, 1]
   var bombCounter: int = 0
   for row in around:
-    if mainWindow.cursorXPos+row < 0:
+    if mainWindow.cursorXPos+row < 0 or mainWindow.cursorXPos+row >= self.blcNum:
       continue
     for column in around:
-      if mainWindow.cursorYPos+column < 0:
+      if mainWindow.cursorYPos+column < 0 or mainWindow.cursorYPos+column >= self.blcNum:
+        continue
+      if row == 0 and column == 0:
         continue
       try:
         if self.blocksSeq[pos+row+(column*self.blcNum)].isBomb:
