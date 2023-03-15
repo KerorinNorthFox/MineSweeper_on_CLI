@@ -196,7 +196,7 @@ class MineSweeper(object):
 
         return False
 
-    # 最初の時マス周りの空白を空ける
+    # 最初の時マス周りの空白を空ける(test)
     def _check_around_if_first(self) -> None:
         no_bomb_list_around_mtr: list[tuple[int]] = []
         arr: list[int] = [-2, 1, 0]
@@ -220,6 +220,7 @@ class MineSweeper(object):
         
         self._next_no_bomb_mtr(no_bomb_list_around_mtr)
 
+    # test
     def _next_no_bomb_mtr(self, no_bomb_list_old:list[tuple[int]]):
         # if no_bomb_list_old is None:
         #     return None

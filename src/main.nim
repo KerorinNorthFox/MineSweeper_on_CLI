@@ -14,11 +14,13 @@ proc main(): void =
   # illwillの画面作成
   var tb: TerminalBuffer = newTerminalBuffer(terminalWidth(), terminalHeight())
   # minesweeper初期化
-  var game = MineSweeper.init(tb)
+  var game: MineSweeper = MineSweeper.init(tb)
 
   game.start()
   while(true):
-    game.update()
+    let isEnd: bool = game.update()
+    if isEnd:
+      exitProc()
 
 when isMainModule:
   main()
