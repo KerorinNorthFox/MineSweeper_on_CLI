@@ -194,7 +194,7 @@ proc setBombs(self:MineSweeper): void =
       break
   
   var lineNum: int = 0
-  # randomize()
+  randomize()
   for i in 0..<self.blcNum: # 行数分回す
     let bombNumPerLine: int  = rand(1..howManyBombPerLine)
     self.totalBomb += bombNumPerLine
