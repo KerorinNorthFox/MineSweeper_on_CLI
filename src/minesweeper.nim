@@ -692,6 +692,7 @@ proc update*(self:MineSweeper): bool =
       msgWindow.drawMsg("Boom!!")
       instructionsWindow.resetActions()
       mainWindow.gameOverAnimation()
+      msgWindow.drawMsg("GAME OVER")
       self.endGame()
       return true
 
