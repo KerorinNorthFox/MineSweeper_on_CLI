@@ -7,11 +7,15 @@ import
 const
   HELP: string = """description:
   Play Minesweeper on CLI.
+usage:
+  ./CLIMineSweeper [--version] [--help] <number>
 options:
-  -h, --help       display the help
-  -v, --version    display the version of the game
+  -h, --help             display the help
+  -v, --version          display the version
+  <5 <= number <= 20>    Set the number of cells and start the game
+  None                   Set the min number(5) of cells and start the game
 """
-  VERSION: string = "MineSweeper on CLI Version : v1.1.0"
+  VERSION: string = "MineSweeper on CLI Version v1.1.0"
   MIN_BLOCK: int = 5 # 最大ブロック数
   MAX_BLOCK: int = 20 # 最小ブロック数
 
@@ -38,7 +42,9 @@ proc main(blc:int): void =
 when isMainModule:
   let args = commandLineParams()
   try:
-    if args.len == 1:
+    if args.len == 0:
+      main(5)
+    elif args.len == 1:
       let opt: string = args[0]
       case opt
       of "-h", "--help":
