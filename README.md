@@ -25,6 +25,6 @@ $ climinesweeper
 ```
 
 # Requirement
-- nim >= 1.6.8
+- nim >= 1.6.10
 - illwill >= 0.3.0
 
