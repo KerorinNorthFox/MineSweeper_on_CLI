@@ -1,74 +1,30 @@
 # CLI MineSweeper
-CLI上でマインスイーパーを遊ぶ
+Play Minesweeper on CLI.
 
-## Requirement
-- Nim >= 1.6.10
-
-これだけ
-## Usage
-### Linux
+# Installation
+## From Nimble
 ```bash
-$ git clone git@github.com:KerorinNorthFox/MineSweeper_on_CLI.git # 自分の環境に持ってくる
-
-$ cd MineSweeper_on_CLI/dist # ディレクトリ移動
-
-$ ./CLIMineSweeper # ゲーム起動!!
+$ nimble install climinesweeper
 ```
-### Windows
-```cmd
-$ git clone git@github.com:KerorinNorthFox/MineSweeper_on_CLI.git # 自分の環境に持ってくる
-
-$ cd MineSweeper_on_CLI/dist # ディレクトリ移動
-
-$ CLIMineSweeper.exe # ゲーム起動!!
+## From Source
 ```
-これだけ
+// Linux
+$ git clone git@github.com:KerorinNorthFox/Minesweeper_on_CLI.git
+$ cd MineSweeper_on_CLI/
+$ ./dist/climinesweeper
 
-起動時にAvastなどのウイルス対策ソフトに弾かれる可能性があるので無効化などで対応してください。
+// Windows
+> git clone https://github.com/KerorinNorthFox/MineSweeper_on_CLI.git
+> cd MineSweeper_on_CLI
+> dist\climinesweeper.exe
+```
 
-## How to play
-### 1.ゲーム起動
-次を実行してゲームを起動します。<br>
+# Usage
 ```bash
-$ ./CLIMineSweeper
-or
-$ CLIMineSweeper.exe
+$ climinesweeper
 ```
 
-### 2.ゲームステージ設定
-ステージの大きさを入力(5～20の間で)してください。<br>入力した数でステージの縦横の大きさが決まります。(5の場合5x5=25マスのステージ、20の場合20x20=400マスのステージ)
-
-### 3.ゲームスタート
-カウントダウンの後、ゲームが始まります。画面上に表示された"o"(マル)がマス目を表しています。<br>
-矢印キーやHJKLキーでカーソルを操作し、操作を行いたいマス目まで移動してください。
-
-### 4.メニュー画面について
-操作したいマスをEnterキーで選択した後、右上のボックスでメニュー画面が操作できます。<br>
-矢印キーの上下やJKキーを使って選択肢を選び、Enterキーで決定すると処理が行われます。
-マス目を選ぶ操作に戻りたいときはEscapeキーを押します。
-
-#### 4-1.メニュー:「旗を立てる/除ける」(Set/Remove the flag)
-この次の入力で選択したマスに旗を立てることができます。既に旗が経っている場合は、旗を除けることができます。旗が立った場所は"F"(FLAGの意)と表示されます。
-#### 4-2.メニュー:「マスを開放する」(Open the cell)
-この次の入力で指定した座標の場所のマスを解放します。爆弾に当たった場合、コンティニューするかがメニュー画面で選択できます。コンティニュー回数が0の場合、ゲームオーバーになります。
-解放した後、周囲8マスに存在する爆弾の数がそのマスに表示されます。周囲に爆弾が存在しない場合は何も表示されません。<br>
-これらの操作を行い爆弾を除去していき、最後まで旗を正しい場所に立て終わりマスを全て解放したらゲームクリアです。
-
-### 5.コンティニューについて
-爆弾に爆発した後三回までコンティニューができます。(コンティニューの数はステージの大きさで変わりません。つまり、ステージが広くなるほど難易度が上がります。)
-
-### 6.ゲームの仕様
-ゲームスタート直後の最初のマス解放で、爆弾に当たる可能性があります。その場合Ctrl+cをしてゲームをやり直してください。<br>
-最初のマス解放で、周囲の繋がった空白マスがまとめて開放する機能はありません。そのため序盤はは運ゲーとなります。
-
-## Playing Hints
-一行当たりの爆弾数には次のような上限があります。この上限以上には一行に爆弾は配置されません。
-
-ステージの広さが縦横7以下 -> 最大爆弾数(個/1行)は2個<br>
-ステージの広さが縦横9以下 -> 最大爆弾数(個/1行)は3個<br>
-ステージの広さが縦横11以下 -> 最大爆弾数(個/1行)は4個<br>
-.<br>.<br>.<br><br>
-というように、縦横が2ずつ増えていくごとに最大爆弾数(個/1行)が1つずつ増えていきます。<br>
-これをうまく利用することで爆弾の位置を予測したりすることができます。
-
+# Requirement
+- nim >= 1.6.8
+- illwill >= 0.3.0
 

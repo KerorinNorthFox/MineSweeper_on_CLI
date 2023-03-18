@@ -577,7 +577,7 @@ proc checkAroundBomb(self:MineSweeper, pos:int): void =
 proc update*(self:MineSweeper): bool =
   let isPassed: bool = self.checkGamePassed()
   if isPassed:
-    msgWindow.drawMsg("GAME CLEAR!!")
+    msgWindow.drawMsg("FINISH!!")
     self.endGame()
     return true
 
