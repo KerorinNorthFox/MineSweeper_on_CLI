@@ -5,7 +5,7 @@ author        = "kerorinnf"
 description   = "Play MineSweeper on CLI"
 license       = "MIT"
 srcDir        = "src"
-bin           = @["climinesweeper"]
+bin           = @["CLIMineSweeper"]
 
 
 # Dependencies
