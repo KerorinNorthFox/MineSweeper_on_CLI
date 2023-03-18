@@ -8,8 +8,6 @@ import
   ./blocks
 
 const
-  MIN_BLOCK: int = 5 # 最大ブロック数
-  MAX_BLOCK: int = 20 # 最小ブロック数
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
 
@@ -129,52 +127,6 @@ proc clearTerminal(): void =
   tb.clear()
   tb.display()
 
-# 最初のマスを設定する画面
-proc inputSetting(self:MineSweeper): void =
-  clearTerminal()
-  tb.drawRect(0, 0, 50, 5)
-  tb.write(2, 1, "<-Initial Setting->")
-  tb.write(2, 2, "Enter the number of cells(5 =< number =< 20)")
-  tb.drawHorizLine(2, 48, 3, doubleStyle=true)
-  tb.write(2, 4, ": ")
-
-  var num: string = ""
-  while(true):
-    tb.display()
-    sleep(20)
-
-    let key = getKey()
-    case key
-    of Key.None: continue
-
-    of Key.Backspace:
-      if num == "": continue
-      if num.len == 1:
-        num = ""
-      else:
-        num = num[0 .. ^2]
-
-    of Key.Enter:
-      if num == "": continue
-      var number: int
-      try:
-        number = num.parseInt
-        if number >= MIN_BLOCK and number <= MAX_BLOCK:
-          self.blcNum = number
-          self.doubleBlcNum = number*2
-          return
-      except ValueError: continue
-
-    else:
-      var number: int
-      try:
-        number = parseInt($($key.char))
-        num = num & $number
-      except ValueError: continue
-
-    tb.write(3, 4, " ".repeat(45))
-    tb.write(3, 4, num)
-
 # blocksSeqにマスを入れていく
 proc makeBlockSeq(self:MineSweeper): void =
   self.blocksSeq = @[]
@@ -219,7 +171,9 @@ proc setBombs(self:MineSweeper): void =
     lineNum.inc()
 
 # ゲームの初期設定
-proc setting(self:MineSweeper): void =
+proc setting(self:MineSweeper, blc:int): void =
+  self.blcNum = blc
+  self.doubleBlcNum = blc*2
   self.makeBlockSeq()
   self.setBombs()
   self.totalFlag = 0
@@ -232,11 +186,10 @@ proc setting(self:MineSweeper): void =
 #     echo "y:", a.y, ", x:", a.x, ", isBomb:", a.isBomb, ", isFlag:", a.isFlag, ", satus:", a.status
 #   echo "blocksSeq.len:", game.blocksSeq.len
 
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer): MineSweeper =
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int): MineSweeper =
   tb = terminalbuffer
   var ms = MineSweeper()
-  ms.inputSetting()
-  ms.setting()
+  ms.setting(blc)
   game = ms
   return ms
 
@@ -325,17 +278,6 @@ proc drawWindow(self:MineSweeper): void =
   tb.display()
 
 proc start*(self:MineSweeper): void =
-  clearTerminal()
-  var
-    halfWidth: int = tb.width div 2
-    halfHeight: int = tb.height div 2
-    text: string = "To the start of the game..."
-  tb.drawRect(halfWidth-20, halfHeight-3, halfWidth+20, halfHeight+1)
-  for count in countdown(3, 1):
-    tb.write(halfWidth-13, halfHeight-1, text, $count)
-    tb.display()
-    sleep(1000)
-
   self.drawWindow()
 
 ##########################################################
