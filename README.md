@@ -1,6 +1,10 @@
 # CLI MineSweeper
 Play Minesweeper on CLI.
 
+<!-- # Attention
+Do not use Nimble to install the game because I do not know why but Latest Version recognized old version v1.0.0(true Latest Version is v1.1.0) so you can not play the climinesweeper.
+Please try [From Source](#from-source) method. -->
+
 # Installation
 ## From Nimble
 ```bash
