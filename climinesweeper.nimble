@@ -6,6 +6,8 @@ description   = "Play MineSweeper on CLI"
 license       = "MIT"
 srcDir        = "src"
 bin           = @["climinesweeper"]
+binDir        = "bin"
+skipDir       = "src/pkg/"
 
 
 # Dependencies
