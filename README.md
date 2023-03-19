@@ -6,26 +6,19 @@ Do not use Nimble to install the game because I do not know why but Latest Versi
 Please try [From Source](#from-source) method. -->
 
 # Installation
-## From Nimble
 ```bash
 $ nimble install climinesweeper
-```
-## From Source
-```
-// Linux
-$ git clone git@github.com:KerorinNorthFox/Minesweeper_on_CLI.git
-$ cd MineSweeper_on_CLI/
-$ ./dist/climinesweeper
-
-// Windows
-> git clone https://github.com/KerorinNorthFox/MineSweeper_on_CLI.git
-> cd MineSweeper_on_CLI
-> dist\climinesweeper.exe
 ```
 
 # Usage
 ```bash
 $ climinesweeper
+```
+```
+option:
+  -v, --version        display the version
+  -h, --help           display the help
+  <5 <= number <= 20>  Set the number of cells and start the game
 ```
 
 # Requirement
