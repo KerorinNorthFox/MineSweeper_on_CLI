@@ -15,7 +15,7 @@ options:
   <5 <= number <= 20>    Set the number of cells and start the game
   None                   Set the min number(5) of cells and start the game
 """
-  VERSION: string = "MineSweeper on CLI Version v1.1.0"
+  VERSION: string = "MineSweeper on CLI Version v1.1.1"
   MIN_BLOCK: int = 5 # 最大ブロック数
   MAX_BLOCK: int = 20 # 最小ブロック数
 
