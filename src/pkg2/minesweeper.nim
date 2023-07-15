@@ -3,6 +3,7 @@ import
   std/strutils,
   std/strformat,
   std/sequtils,
+  std/tables,
   std/random,
   ./blocks
 
@@ -23,59 +24,42 @@ const
 #----------------------------------------------------------------
 #                   Types
 #----------------------------------------------------------------
-type WindowLines = ref object
-  firstLine: string
-  secondLine: string
-  otherLines: seq[string]
+type
+  WindowLines = ref object
+    firstLine: string
+    secondLine: string
+    otherLines: seq[string]
+
+  Position = object
+    x: int
+    y: int
+
+  TextTable = ref object
+    text: Table[string,string]
+    position: Table[string,int]
 
 type
   MainWindow = ref object
-    xPos: int
-    yPos: int
-    cursorXPos: int
-    cursorYPos: int
-    previousCursorXPos: int
-    previousCursorYPos: int
+    winPos: Position
+    cursor: Position
+    width: int
+    height: int
 
   MenuWindow = ref object
-    xPos: int
-    yPos: int
-    xPosEnd: int
-    yPosEnd: int
-    cursorPositionText: string
-    totalFlagText: string
-    remainingContinueText: string
-    separatorYPos: int
-    firstChoiceText: string
-    firstChoiceYPos: int
-    secondChoiceText: string
-    secondChoiceYPos: int
-    cursorPositionYPos: int
-    totalFlagYPos: int
-    remainingContinueYPos: int
-    mode: int
+    winPos: Position
+    texts: TextTable
 
   InstructionsWindow = ref object
-    xPos: int
-    yPos: int
-    xPosEnd: int
-    yPosEnd: int
 
   MessageWindow = ref object
-    xPos: int
-    yPos: int
-    xPosEnd: int
-    yPosEnd: int
-    msgXPos: int
-    msgYPos: int
 
 type MineSweeper* = ref object
   blocks: seq[Blocks]
-  totalFlags: int # 現在立っている旗の総数
-  remainingBombs: int # 現在の残り爆弾総数
   blc: int # マス目縦/横の数
   doubleBlc: int
+  placedTotalFlags: int # 現在立っている旗の総数
   remainingContinue: int # 残りコンティニュー数
+  remainingBombs: int # 現在の残り爆弾総数
 
   mainWindow: MainWindow
   menuWindow: MenuWindow
@@ -107,7 +91,7 @@ proc clearTerminal(): void =
 #----------------------------------------------------------------
 #               Main Window Dec
 #----------------------------------------------------------------
-proc init(_:type MainWindow): MainWindow
+proc init(_:type MainWindow, ms:MineSweeper): MainWindow
 
 proc draw(self:MainWindow): void
 
@@ -124,7 +108,7 @@ proc moveCursor(self:MainWindow): void
 #----------------------------------------------------------------
 #               Menu Window Dec
 #----------------------------------------------------------------
-proc init(_:type MenuWindow): MenuWindow
+proc init(_:type MenuWindow, dpdWin:MainWindow): MenuWindow
 
 proc draw(self:MenuWindow): void
 
@@ -200,24 +184,21 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void
 #----------------------------------------------------------------
 #               Main Window Impl
 #----------------------------------------------------------------
-proc init(_:type MainWindow): MainWindow =
+proc init(_:type MainWindow, ms:MineSweeper): MainWindow =
   result = MainWindow()
-  result.xPos = 0
-  result.yPos = 0
-  result.cursorXPos = 0
-  result.cursorYPos = 0
-  result.previousCursorXPos = 0
-  result.previousCursorYPos = 0
+  result.winPos = Position(x:0, y:0)
+  result.cursor = Position(x:0, y:0) # TODO:
+  result.width = ms.doubleBlc+3
+  result.height = ms.blc+3
 
 # メイン画面描画
 proc draw(self:MainWindow): void =
   tb.resetAttributes()
   let lines: WindowLines = game.makeWindowLines()
-  tb.write(self.xPos, self.yPos, lines.firstLine) # 一行目描画
-  tb.write(self.xPos, self.yPos+1, lines.secondLine) # 二行目描画
+  tb.write(self.winPos.x, self.winPos.y, lines.firstLine)
+  tb.write(self.winPos.x, self.winPos.y+1, lines.secondLine)
   for i, line in lines.otherLines:
-    tb.write(self.xPos, self.yPos+2+i, line) # 他の行を描画
-
+    tb.write(self.winPos.x, self.winPos.y+2+i, line)
 
 # ゲームオーバー時のアニメーションを表示
 proc drawGameOverAnimation(self:MainWindow): void =
@@ -242,44 +223,27 @@ proc moveCursor(self:MainWindow): void =
 #----------------------------------------------------------------
 #               Menu Window Impl
 #----------------------------------------------------------------
-proc init(_:type MenuWindow): MenuWindow =
+proc init(_:type MenuWindow, dpdWin: MainWindow): MenuWindow =
   result = MenuWindow()
-  result.xPos = 5
-  result.yPos = 1
-  result.xPosEnd = 45
-  result.yPosEnd = 8
-  result.cursorPositionText = "Cursor position :"
-  result.totalFlagText = "Remaining flags :"
-  result.remainingContinueText = "Remaining continue :"
-  result.separatorYPos = 4
-  result.firstChoiceText = "Place/Remove the flag"
-  result.firstChoiceYPos = 5
-  result.secondChoiceText = "Open the cell"
-  result.secondChoiceYPos = 6
-  result.cursorPositionYPos = 1
-  result.totalFlagYPos = 2
-  result.remainingContinueYPos = 3
+  result.winPos = Position(x:dpdWin.width+2, y:1)
+  result.texts = TextTable()
+  result.texts.text = initTable[string,string]()
+  # Template: result.texts.text[""] = ""
+  result.texts.text["CursorPosition"] = "Cursor position :"
+  result.texts.text["RemainingFlags"] = "Remaining flags :"
+  result.texts.text["RemainingContinue"] = "Remaining continue :"
+  result.texts.position = initTable[string,int]()
+  # Template: result.texts.position[""] = 0
 
 # 画面描画
 proc draw(self:MenuWindow): void =
   tb.resetAttributes()
-  let
-    d: int = game.doubleBlc
-    xPos: int = d+self.xPos
-    yPos: int = self.yPos
-  tb.drawRect(xPos, yPos, d+self.xPosEnd, self.yPosEnd)
-  tb.write(xPos+2, yPos+self.cursorPositionYPos, self.cursorPositionText) # 現在のカーソル座標を表示
-  tb.write(xPos+2, yPos+self.totalFlagYPos, self.totalFlagText) # 旗総数を表示
-  tb.write(xPos+2, yPos+self.remainingContinueYPos, self.remainingContinueText) # 残りコンティニュー回数を表示
-  tb.drawHorizLine(xPos+2, d+self.xPosEnd-1, yPos+self.separatorYPos, doubleStyle=true)
-  self.drawChoices(xPos, yPos, self.firstChoiceText, self.secondChoiceText) # 選択肢を表示
+  # tb.drawRect(self.winPos.x, self.winPos.y)
+  # tb.write(self.winPos.x, self.winPos.y)
 
 # 選択肢を描画
 proc drawChoices(self:MenuWindow, xPos, yPos:int, firstText, secondText:string): void =
-  tb.write(xPos+4, yPos+self.firstChoiceYPos, " ".repeat(len(self.firstChoiceText)))
-  tb.write(xPos+4, yPos+self.secondChoiceYPos, " ".repeat(len(self.secondChoiceText)))
-  tb.write(xPos+4, yPos+self.firstChoiceYPos, firstText)
-  tb.write(xPos+4, yPos+self.secondChoiceYPos, secondText)
+  discard
 
 # 残り旗数を描画
 proc drawRemainingFlags(self:MenuWindow): void =
@@ -310,10 +274,6 @@ proc selectContinue(self:MenuWindow): void =
 #----------------------------------------------------------------
 proc init(_:type InstructionsWindow, m:MenuWindow): InstructionsWindow =
   result = InstructionsWindow()
-  result.xPos = m.xPos
-  result.yPos = m.yPosEnd+1
-  result.xPosEnd = m.xPosEnd
-  result.yPosEnd = result.yPos+14
 
 # 画面描画
 proc draw(self:InstructionsWindow): void =
@@ -332,12 +292,6 @@ proc resetActions(self:InstructionsWindow): void =
 #----------------------------------------------------------------
 proc init(_:type MessageWindow, i:InstructionsWindow): MessageWindow =
   result = MessageWindow()
-  result.xPos = 1
-  result.yPos = i.yPosEnd+1
-  result.xPosEnd = i.xPosEnd
-  result.yPosEnd = result.yPos+2
-  result.msgXPos = result.xPos+2
-  result.msgYPos = result.yPos+1
 
 # 画面描画
 proc draw(self:MessageWindow): void =
@@ -360,10 +314,10 @@ proc setting(self:MineSweeper, blc:int): void =
   self.doubleBlc = blc*2
   self.makeBlocks()
   self.placeBombs()
-  self.totalFlags = 0
+  self.placedTotalFlags = 0
   self.remainingContinue = REMAINING_CONTINUE
-  self.mainWindow = MainWindow.init()
-  self.menuWindow = MenuWindow.init()
+  self.mainWindow = MainWindow.init(self)
+  self.menuWindow = MenuWindow.init(self.mainWindow)
   self.instructionsWindow = InstructionsWindow.init(self.menuWindow)
   self.messageWindow = MessageWindow.init(self.instructionsWindow)
 
@@ -379,16 +333,16 @@ proc makeBlocks(self:MineSweeper): void =
 
 # 爆弾をランダムに配置
 proc placeBombs(self:MineSweeper): void =
-  var bombsLimPerLine: int
+  var bombLimPerLine: int
   for i, lim in BLC_LIM_ARRAY: # 配列の長さによって爆弾の数を調整
     if self.blc <= lim:
-      bombsLimPerLine = BOMB_LIM_ARRAY[i]
+      bombLimPerLine = BOMB_LIM_ARRAY[i]
       break
   
   randomize()
   var lines: int = 0
   for i in 0..<self.blc: # 行数分回す
-    let bombsPerLine: int = rand(1..bombsLimPerLine)
+    let bombsPerLine: int = rand(1..bombLimPerLine)
     self.remainingBombs += bombsPerLine
 
     var count: int = 0
