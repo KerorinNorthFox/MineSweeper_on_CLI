@@ -2,7 +2,7 @@ import
   illwill,
   std/os,
   std/strutils,
-  ./pkg/minesweeper
+  ./pkg2/minesweeper
 
 const
   HELP: string = """description:

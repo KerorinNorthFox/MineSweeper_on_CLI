@@ -3,7 +3,6 @@ import
   std/strutils,
   std/strformat,
   std/sequtils,
-  std/tables,
   std/random,
   ./blocks
 
@@ -20,6 +19,7 @@ const
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
   REMAINING_CONTINUE: int = 3
+  WINDOW_WIDTH: int = 40
 
 #----------------------------------------------------------------
 #                   Types
@@ -34,24 +34,30 @@ type
     x: int
     y: int
 
-  TextTable = ref object
-    text: Table[string,string]
-    position: Table[string,int]
-
 type
   MainWindow = ref object
-    winPos: Position
+    pos: Position
     cursor: Position
     width: int
     height: int
 
   MenuWindow = ref object
-    winPos: Position
-    texts: TextTable
+    pos: Position
+    width: int
+    height: int
+    texts: seq[string]
+    defaultChoices: seq[string]
+    continueChoices: seq[string]
 
   InstructionsWindow = ref object
+    pos: Position
+    width: int
+    height: int
 
   MessageWindow = ref object
+    pos: Position
+    width: int
+    height: int
 
 type MineSweeper* = ref object
   blocks: seq[Blocks]
@@ -88,6 +94,17 @@ proc clearTerminal(): void =
   tb.clear()
   tb.display()
 
+# 文字色などを規定に設定
+proc setDefaultAttribute(): void =
+  tb.resetAttributes()
+  tb.setForegroundColor(fgWhite)
+
+# 文字色を任意で設定
+proc setAttirbute(fg:ForegroundColor, bg:BackgroundColor): void =
+  tb.resetAttributes()
+  tb.setForegroundColor(fg)
+  tb.setBackgroundColor(bg)
+
 #----------------------------------------------------------------
 #               Main Window Dec
 #----------------------------------------------------------------
@@ -95,15 +112,15 @@ proc init(_:type MainWindow, ms:MineSweeper): MainWindow
 
 proc draw(self:MainWindow): void
 
-proc drawGameOverAnimation(self:MainWindow): void
-
-proc drawBomb(self:MainWindow, i:int): void
-
-proc updateOldCursorPos(self:MainWindow): void
+proc moveCursor(self:MainWindow): void
 
 proc drawCursor(self:MainWindow): void
 
-proc moveCursor(self:MainWindow): void
+proc updateOldCursorPos(self:MainWindow): void
+
+proc drawGameOverAnimation(self:MainWindow): void
+
+proc drawBomb(self:MainWindow, i:int): void
 
 #----------------------------------------------------------------
 #               Menu Window Dec
@@ -112,15 +129,15 @@ proc init(_:type MenuWindow, dpdWin:MainWindow): MenuWindow
 
 proc draw(self:MenuWindow): void
 
-proc drawChoices(self:MenuWindow, xPos, yPos:int, firstText, secondText:string): void
+proc drawChoices(self:MenuWindow, choices:seq[string]): void
 
 proc drawRemainingFlags(self:MenuWindow): void
 
 proc drawRemainingContinues(self:MenuWindow): void
 
-proc drawMenuCursor(self:MenuWindow): void
-
 proc drawCursor(self:MenuWindow, reset:bool=false): void
+
+proc drawMenuCursor(self:MenuWindow): void
 
 proc selectChoices(self:MenuWindow): void
 
@@ -129,7 +146,7 @@ proc selectContinue(self:MenuWindow): void
 #----------------------------------------------------------------
 #               Instructions Window Dec
 #----------------------------------------------------------------
-proc init(_:type InstructionsWindow, m:MenuWindow): InstructionsWindow
+proc init(_:type InstructionsWindow, dpdWin:MenuWindow): InstructionsWindow
 
 proc draw(self:InstructionsWindow): void
 
@@ -140,7 +157,7 @@ proc resetActions(self:InstructionsWindow): void
 #----------------------------------------------------------------
 #               Message Window Dec
 #----------------------------------------------------------------
-proc init(_:type MessageWindow, i:InstructionsWindow): MessageWindow
+proc init(_:type MessageWindow, dpdWin:InstructionsWindow, mainWinWidth:int): MessageWindow
 
 proc draw(self:MessageWindow): void
 
@@ -186,19 +203,19 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void
 #----------------------------------------------------------------
 proc init(_:type MainWindow, ms:MineSweeper): MainWindow =
   result = MainWindow()
-  result.winPos = Position(x:0, y:0)
+  result.pos = Position(x:0, y:0)
   result.cursor = Position(x:0, y:0) # TODO:
   result.width = ms.doubleBlc+3
   result.height = ms.blc+3
 
 # メイン画面描画
 proc draw(self:MainWindow): void =
-  tb.resetAttributes()
+  setDefaultAttribute()
   let lines: WindowLines = game.makeWindowLines()
-  tb.write(self.winPos.x, self.winPos.y, lines.firstLine)
-  tb.write(self.winPos.x, self.winPos.y+1, lines.secondLine)
+  tb.write(self.pos.x, self.pos.y, lines.firstLine)
+  tb.write(self.pos.x, self.pos.y+1, lines.secondLine)
   for i, line in lines.otherLines:
-    tb.write(self.winPos.x, self.winPos.y+2+i, line)
+    tb.write(self.pos.x, self.pos.y+2+i, line)
 
 # ゲームオーバー時のアニメーションを表示
 proc drawGameOverAnimation(self:MainWindow): void =
@@ -223,27 +240,48 @@ proc moveCursor(self:MainWindow): void =
 #----------------------------------------------------------------
 #               Menu Window Impl
 #----------------------------------------------------------------
-proc init(_:type MenuWindow, dpdWin: MainWindow): MenuWindow =
+proc init(_:type MenuWindow, dpdWin:MainWindow): MenuWindow =
   result = MenuWindow()
-  result.winPos = Position(x:dpdWin.width+2, y:1)
-  result.texts = TextTable()
-  result.texts.text = initTable[string,string]()
-  # Template: result.texts.text[""] = ""
-  result.texts.text["CursorPosition"] = "Cursor position :"
-  result.texts.text["RemainingFlags"] = "Remaining flags :"
-  result.texts.text["RemainingContinue"] = "Remaining continue :"
-  result.texts.position = initTable[string,int]()
-  # Template: result.texts.position[""] = 0
+  result.pos = Position(x:dpdWin.width+2, y:1)
+  result.texts = @[]
+  result.texts.add("Cursor position :")
+  result.texts.add("Remaining flags :")
+  result.texts.add("Remaining continue :")
+  result.texts.add("_separator")
+  result.defaultChoices = @[]
+  result.defaultChoices.add("Place/Remove the flag")
+  result.defaultChoices.add("Open the cell")
+  result.continueChoices = @[]
+  result.continueChoices.add("Yes")
+  result.continueChoices.add("No")
+  result.width = WINDOW_WIDTH
+  result.height = result.texts.len+result.defaultChoices.len+1
+  if result.defaultChoices.len < result.continueChoices.len:
+    result.height = result.texts.len+result.continueChoices.len
 
 # 画面描画
 proc draw(self:MenuWindow): void =
-  tb.resetAttributes()
-  # tb.drawRect(self.winPos.x, self.winPos.y)
-  # tb.write(self.winPos.x, self.winPos.y)
+  setDefaultAttribute()
+  tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
+  let
+    xPos:int = self.pos.x + 2
+  for i in 1..self.texts.len:
+    if self.texts[i-1] == "_separator":
+      tb.drawHorizLine(xPos, self.pos.x+self.width-2, self.pos.y+i, doubleStyle=true)
+    elif self.texts[i-1] == "_space":
+      discard
+    else:
+      tb.write(xPos, self.pos.y+i, self.texts[i-1])
+  self.drawChoices(self.defaultChoices)
 
 # 選択肢を描画
-proc drawChoices(self:MenuWindow, xPos, yPos:int, firstText, secondText:string): void =
-  discard
+proc drawChoices(self:MenuWindow, choices:seq[string]): void =
+  let
+    xPos: int = self.pos.x + 4
+    yPos: int = self.pos.y + self.texts.len
+  for i in 1..choices.len:
+    tb.write(xPos, yPos+i, " ".repeat(self.width-4))
+    tb.write(xPos, yPos+i, choices[i-1])
 
 # 残り旗数を描画
 proc drawRemainingFlags(self:MenuWindow): void =
@@ -272,12 +310,20 @@ proc selectContinue(self:MenuWindow): void =
 #----------------------------------------------------------------
 #               Instructions Window Impl
 #----------------------------------------------------------------
-proc init(_:type InstructionsWindow, m:MenuWindow): InstructionsWindow =
+proc init(_:type InstructionsWindow, dpdWin:MenuWindow): InstructionsWindow =
   result = InstructionsWindow()
+  result.pos = Position(x:dpdWin.pos.x, y:dpdWin.pos.y+dpdWin.height+1)
+  result.width = WINDOW_WIDTH
+  result.height = 14
 
 # 画面描画
 proc draw(self:InstructionsWindow): void =
-  discard
+  setDefaultAttribute()
+  tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
+  let
+    xPos: int = self.pos.x+2
+  tb.write(xPos, self.pos.y+1, "Available actions")
+  tb.drawHorizLine(xPos, self.pos.x+self.width-2, self.pos.y+2, doubleStyle=true)
 
 # 可能な操作を描画
 proc drawActions(self:InstructionsWindow, actions:seq[string]): void =
@@ -290,20 +336,27 @@ proc resetActions(self:InstructionsWindow): void =
 #----------------------------------------------------------------
 #               Message Window Impl
 #----------------------------------------------------------------
-proc init(_:type MessageWindow, i:InstructionsWindow): MessageWindow =
+proc init(_:type MessageWindow, dpdWin:InstructionsWindow, mainWinWidth:int): MessageWindow =
   result = MessageWindow()
+  result.pos = Position(x:1, y:dpdWin.pos.y+dpdWin.height+1)
+  result.width = mainWinWidth+1+dpdWin.width
+  result.height = 2
 
 # 画面描画
 proc draw(self:MessageWindow): void =
-  discard
+  setDefaultAttribute()
+  tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
 
 # メッセージを描画
 proc drawMsg(self:MessageWindow, text:string): void =
-  discard
+  self.resetMsg()
+  tb.write(self.pos.x+1, self.pos.y+1, text)
+  tb.display()
 
 # メッセージを消す
 proc resetMsg(self:MessageWindow): void =
-  discard
+  setDefaultAttribute()
+  tb.write(self.pos.x+1, self.pos.y+1, " ".repeat(self.pos.x+self.width-1))
 
 #----------------------------------------------------------------
 #               MineSweeper Impl
@@ -319,7 +372,7 @@ proc setting(self:MineSweeper, blc:int): void =
   self.mainWindow = MainWindow.init(self)
   self.menuWindow = MenuWindow.init(self.mainWindow)
   self.instructionsWindow = InstructionsWindow.init(self.menuWindow)
-  self.messageWindow = MessageWindow.init(self.instructionsWindow)
+  self.messageWindow = MessageWindow.init(self.instructionsWindow, self.mainWindow.width)
 
 # まっさらなステージを作成
 proc makeBlocks(self:MineSweeper): void =
@@ -386,7 +439,7 @@ proc makeWindowLines(self:MineSweeper): WindowLines =
     var line: seq[string] = newSeq[string](1)
     firstLine.add(fmt" {chr(64+i):>2}") # 一行目はA,B,C...という感じ
     secondLine.add("__") # 二行目はアンダーライン
-    line.add(fmt"{$(i):>2}")
+    line.add(fmt"{$(i):>2}|")
     for _ in 1..self.blc: # 縦の数だけ回す
       line.add(fmt" {self.blocks[count].status}")
       count.inc()
@@ -443,5 +496,5 @@ proc start*(self:MineSweeper): void =
   self.drawWindow()
   # TODO: ここにゲームの更新を表示する処理
 
-proc update*(self:MineSweeper): void =
-  discard
+proc update*(self:MineSweeper): bool =
+  return false
