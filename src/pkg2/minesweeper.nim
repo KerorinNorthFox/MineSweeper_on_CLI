@@ -327,11 +327,23 @@ proc draw(self:InstructionsWindow): void =
 
 # 可能な操作を描画
 proc drawActions(self:InstructionsWindow, actions:seq[string]): void =
-  discard
+  setDefaultAttribute()
+  self.resetActions()
+  let
+    xPos: int = self.pos.x + 2
+    yPos: int = self.pos.y + 3
+  for i, action in actions:
+    tb.write(xPos, yPos+i, action)
+  tb.display()
 
 # 可能な操作を消す
 proc resetActions(self:InstructionsWindow): void =
-  discard
+  let
+    xPos: int = self.pos.x + 2
+    yPos: int = self.pos.y + 3
+  for i in 0..<self.height-3:
+    tb.write(xPos, yPos+i, " ".repeat(self.width-3))
+  tb.display()
 
 #----------------------------------------------------------------
 #               Message Window Impl
