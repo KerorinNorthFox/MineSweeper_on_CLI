@@ -17,6 +17,32 @@ proc resetColor*(self:var Blocks): void =
   self.bg = bgNone
 
 proc setColor*(self:var Blocks, fg:ForegroundColor, bg:BackgroundColor): void =
-  self.resetColor()
   self.fg = fg
   self.bg = bg
+
+type Position* = object
+  x*: int
+  y*: int
+
+type Cursor* = object
+  x*: int
+  y*: int
+  preX*: int
+  preY*: int
+
+# ひとつ前のカーソル位置を更新
+proc update*(self:var Cursor): void =
+  self.preX = self.x
+  self.preY = self.y
+
+proc moveRight*(self:var Cursor): void =
+  self.x.inc()
+
+proc moveLeft*(self:var Cursor): void =
+  self.x.dec()
+
+proc moveUp*(self:var Cursor): void =
+  self.y.dec()
+
+proc moveDown*(self:var Cursor): void =
+  self.y.inc()

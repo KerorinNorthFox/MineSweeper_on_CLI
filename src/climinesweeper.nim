@@ -58,6 +58,7 @@ when isMainModule:
           main(blc)
         else: raise
     else: raise
+    
   except:
     echo "[Error]: Invalid command args."
     quit(1)
