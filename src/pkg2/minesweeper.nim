@@ -19,8 +19,9 @@ import
 const
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
-  REMAINING_CONTINUE: int = 3
-  WINDOW_WIDTH: int = 40
+  REMAINING_CONTINUE: int = 3 # 残りコンティニュー数
+  WINDOW_WIDTH: int = 40 # ウィンドウの横幅
+  GET_KEY_SLEEP_MS: int = 20 # キー入力のスリープタイム
 
 #----------------------------------------------------------------
 #                   Types
@@ -806,7 +807,7 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 # ゲーム初期化処理
 proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int): MineSweeper =
   tb = terminalbuffer
-  var ms = MineSweeper()
+  let ms = MineSweeper()
   ms.setting(blc)
   game = ms
   return ms

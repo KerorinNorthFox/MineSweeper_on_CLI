@@ -12,7 +12,7 @@ usage:
 options:
   -h, --help             display the help
   -v, --version          display the version
-  <5 <= number <= 20>    Set the number of cells and start the game
+  5 <= number <= 20      Set the number of cells and start the game
   None                   Set the min number(5) of cells and start the game
 """
   VERSION: string = "MineSweeper on CLI Version v1.1.1"
@@ -43,14 +43,15 @@ when isMainModule:
   let args = commandLineParams()
   try:
     if args.len == 0:
-      main(5)
+      main(5) # オプションなしのとき5マスでスタート
+
     elif args.len == 1:
       let opt: string = args[0]
       case opt
       of "-h", "--help":
-        echo HELP
+        echo HELP # ヘルプを表示
       of "-v", "--version":
-        echo VERSION
+        echo VERSION # バージョンを表示
       else:
         let blc: int = opt.parseInt
         if blc >= MIN_BLOCK and blc <= MAX_BLOCK:
