@@ -99,15 +99,10 @@ proc clearTerminal(): void =
   tb.clear()
   tb.display()
 
-# 文字色などを規定に設定
-proc setDefaultAttribute(): void =
-  tb.resetAttributes()
-  tb.setForegroundColor(fgWhite)
-
 # 文字色を任意で設定
-proc setAttribute(fg:ForegroundColor, bg:BackgroundColor): void =
+proc setAttribute(self:var TerminalBuffer, fg:ForegroundColor, bg:BackgroundColor): void =
   tb.resetAttributes()
-  tb.setForegroundColor(fg)
+  tb.setForegroundColor(fg, true)
   tb.setBackgroundColor(bg)
 
 proc showCursorPosDebug(): void =
@@ -172,9 +167,9 @@ proc init(_:type MessageWindow, dpdWin:InstructionsWindow, mainWinWidth:int): Me
 
 proc draw(self:MessageWindow): void
 
-proc drawMessage(self:MessageWindow, text:string): void
+proc drawMessage(self:MessageWindow, text:string, reset:bool=true): void
 
-proc resetMessage(self:MessageWindow): void
+proc resetMessage(self:MessageWindow, reset:bool=true): void
 
 #----------------------------------------------------------------
 #               MineSweeper Dec
@@ -222,7 +217,7 @@ proc init(_:type MainWindow, ms:MineSweeper): MainWindow =
 
 # メイン画面描画
 proc draw(self:MainWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     lines: WindowLines = game.makeWindowLines()
     xOffset = 0
@@ -283,7 +278,7 @@ proc moveCursor(self:MainWindow): void =
 
 # カーソルを描画
 proc drawCursor(self:MainWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 4
     yOffset: int = 2
@@ -291,9 +286,12 @@ proc drawCursor(self:MainWindow): void =
     oldYPos: int = self.preCursor.y + yOffset
     xPos: int = self.cursor.x*2 + xOffset
     yPos: int = self.cursor.y + yOffset
+  tb.setAttribute(game.blocks[self.preCursor.y*game.blc + self.preCursor.x].fg, bgNone)
   tb.write(oldXPos, oldYPos, game.blocks[self.preCursor.y*game.blc + self.preCursor.x].status)
-  setAttribute(fgBlack, bgWhite)
+
+  tb.setAttribute(fgBlack, bgWhite)
   tb.write(xPos, yPos, game.blocks[self.cursor.y*game.blc + self.cursor.x].status)
+  
   game.menuWindow.drawCursorPosition() # メニュー画面にカーソルの座標を表示
   showCursorPosDebug() # FIXME: デバッグ用
   tb.display()
@@ -305,7 +303,7 @@ proc updatePreCursor(self:MainWindow): void =
 
 # ゲームオーバー時のアニメーションを表示
 proc drawGameOverAnimation(self:MainWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 4
     yOffset: int = 2
@@ -313,11 +311,11 @@ proc drawGameOverAnimation(self:MainWindow): void =
     yPos: int = self.cursor.y + yOffset
   var flag: bool = true
   # 爆弾の位置を点滅させるアニメーション
-  for _ in 1..3:
+  for _ in 1..6:
     if flag:
-      setAttribute(fgBlack, bgWhite)
+      tb.setAttribute(fgRed, bgWhite)
     else:
-      setDefaultAttribute()
+      tb.setAttribute(fgRed, bgNone)
     tb.write(xPos, yPos, "B")
     tb.display()
     flag = not flag
@@ -333,9 +331,10 @@ proc drawBomb(self:MainWindow, i:int): void =
     xPos: int = (i mod game.blc) * 2
     xPosHalf: int = xPos div 2
     yPos: int = i div game.blc
-  setDefaultAttribute()
+  tb.resetAttributes()
   tb.write(xPos+xOffset, yPos+yOffset, " ")
   if game.blocks[yPos*game.blc+xPosHalf].isBomb:
+    tb.setAttribute(fgRed, bgNone)
     tb.write(xPos+xOffset, yPos+yOffset, "B")
   tb.display()
 
@@ -365,7 +364,7 @@ proc init(_:type MenuWindow, dpdWin:MainWindow): MenuWindow =
 
 # 画面描画
 proc draw(self:MenuWindow): void =
-  setDefaultAttribute()
+  tb.setAttribute(fgCyan, bgNone)
   tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
   let
     xOffset: int = 2
@@ -373,7 +372,9 @@ proc draw(self:MenuWindow): void =
     xPos: int = self.pos.x + xOffset
     yPos: int = self.pos.y  + yOffset
   for i in 1..self.texts.len:
+    tb.resetAttributes()
     if self.texts[i-1] == "_separator":
+      tb.setAttribute(fgCyan, bgNone)
       tb.drawHorizLine(xPos, self.pos.x+self.width-2, yPos+i, doubleStyle=true)
     elif self.texts[i-1] == "_space":
       discard
@@ -383,7 +384,7 @@ proc draw(self:MenuWindow): void =
 
 # 選択肢を描画
 proc drawChoices(self:MenuWindow, choices:seq[string]): void =
-  setDefaultAttribute()
+  tb.setAttribute(fgYellow, bgNone)
   let
     xOffset: int = 4
     yOffset: int = self.texts.len
@@ -395,12 +396,13 @@ proc drawChoices(self:MenuWindow, choices:seq[string]): void =
 
 # メニュー画面をアップデート
 proc updateMenu(self:MenuWindow): void =
+  self.draw()
   self.drawRemainingFlags()
   self.drawRemainingContinues()
 
 # 残り旗数を描画
 proc drawRemainingFlags(self:MenuWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 2 + self.texts[1].len
     yOffset: int = 2
@@ -412,7 +414,7 @@ proc drawRemainingFlags(self:MenuWindow): void =
 
 # 残りコンティニュー数を描画
 proc drawRemainingContinues(self:MenuWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 2 + self.texts[2].len
     yOffset: int = 3
@@ -424,7 +426,7 @@ proc drawRemainingContinues(self:MenuWindow): void =
 
 # カーソル座標をメニュー画面に描画
 proc drawCursorPosition(self:MenuWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 2 + self.texts[0].len
     yOffset: int = self.cursor.y
@@ -474,7 +476,7 @@ proc selectChoices(self:MenuWindow): bool =
 
 # メニュー選択カーソルを描画
 proc drawCursor(self:MenuWindow, reset:bool=false): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 2
     yOffset: int = self.texts.len + 1
@@ -486,12 +488,40 @@ proc drawCursor(self:MenuWindow, reset:bool=false): void =
   for i in 0..<choices.len:
     tb.write(xPos, yPos+i, " ")
   if not reset:
+    tb.setAttribute(fgYellow, bgNone)
     tb.write(xPos, yPos+self.mode, ">")
   tb.display()
 
 # コンティニューするかの選択
 proc selectContinue(self:MenuWindow): bool =
-  discard
+  let actions: seq[string] = @[
+    "Arrow key[Up, Down] : Select choices",
+    "JK key : Select choices"
+  ]
+  game.instructionsWindow.drawActions(actions)
+  self.drawChoices(@["Yes","No"])
+  game.messageWindow.drawMessage("Do you want to continue?")
+  self.mode = 0
+
+  while(true):
+    self.drawCursor()
+    sleep(20)
+
+    let key = getKey()
+    case key
+    of Key.Enter:
+      break
+    of Key.Up, Key.Down, Key.K, Key.J:
+      if self.mode == 0:
+        self.mode = 1
+      elif self.mode == 1:
+        self.mode = 0
+    else: discard
+
+  self.drawCursor(reset=true)
+  if self.mode == 0: # Yes
+    return true
+  return false # No
 
 #----------------------------------------------------------------
 #               Instructions Window Impl
@@ -507,7 +537,7 @@ proc init(_:type InstructionsWindow, dpdWin:MenuWindow): InstructionsWindow =
 
 # 画面描画
 proc draw(self:InstructionsWindow): void =
-  setDefaultAttribute()
+  tb.setAttribute(fgCyan, bgNone)
   tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
   let
     xOffset: int = 2
@@ -515,7 +545,9 @@ proc draw(self:InstructionsWindow): void =
     xPos: int = self.pos.x + xOffset
     yPos: int = self.pos.y + yOffset
   for i in 1..self.texts.len:
+    tb.resetAttributes()
     if self.texts[i-1] == "_separator":
+      tb.setAttribute(fgCyan, bgNone)
       tb.drawHorizLine(xPos, self.pos.x+self.width-2, yPos+i, doubleStyle=true)
     elif self.texts[i-1] == "_space":
       discard
@@ -525,6 +557,7 @@ proc draw(self:InstructionsWindow): void =
 # 可能な操作を描画
 proc drawActions(self:InstructionsWindow, actions:seq[string]): void =
   self.resetActions()
+  tb.setAttribute(fgYellow, bgNone)
   let
     xOffset: int = 2
     yOffset: int = self.texts.len + 1
@@ -536,7 +569,7 @@ proc drawActions(self:InstructionsWindow, actions:seq[string]): void =
 
 # 可能な操作を消す
 proc resetActions(self:InstructionsWindow): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   let
     xOffset: int = 2
     yOffset: int = self.texts.len + 1
@@ -557,12 +590,12 @@ proc init(_:type MessageWindow, dpdWin:InstructionsWindow, mainWinWidth:int): Me
 
 # 画面描画
 proc draw(self:MessageWindow): void =
-  setDefaultAttribute()
+  tb.setAttribute(fgCyan, bgNone)
   tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
 
 # メッセージを描画
-proc drawMessage(self:MessageWindow, text:string): void =
-  self.resetMessage()
+proc drawMessage(self:MessageWindow, text:string, reset:bool=true): void =
+  self.resetMessage(reset=reset)
   let
     xOffset: int = 1
     yOffset: int = 1
@@ -572,8 +605,9 @@ proc drawMessage(self:MessageWindow, text:string): void =
   tb.display()
 
 # メッセージを消す
-proc resetMessage(self:MessageWindow): void =
-  setDefaultAttribute()
+proc resetMessage(self:MessageWindow, reset:bool=true): void =
+  if reset:
+    tb.resetAttributes()
   let
     xOffset: int = 1
     yOffset: int = 1
@@ -682,7 +716,7 @@ proc makeWindowLines(self:MineSweeper): WindowLines =
 proc checkIfGamePassed(self:MineSweeper): bool =
   for cell in self.blocks:
     if not cell.isFlag:
-      if cell.isBomb:
+      if cell.isBomb or not cell.isEmpty:
         return false
   return true
 
@@ -693,7 +727,6 @@ proc endGame(self:MineSweeper): void =
     "Ctrl+c : Exit the game"
   ]
   self.instructionsWindow.drawActions(actions)
-  self.messageWindow.drawMessage("FINISH!!")
 
   var count: int = 0
   while(true):
@@ -708,7 +741,7 @@ proc endGame(self:MineSweeper): void =
 
 # 旗を置く
 proc placeFlag(self:MineSweeper, pos:int): void =
-  setAttribute(fgRed, bgNone)
+  tb.setAttribute(fgRed, bgNone)
   self.blocks[pos].setColor(fgRed, bgNone)
   self.blocks[pos].isFlag = true
   self.blocks[pos].status = "F"
@@ -716,7 +749,7 @@ proc placeFlag(self:MineSweeper, pos:int): void =
 
 # 旗を除ける
 proc removeFlag(self:MineSweeper, pos:int): void =
-  setDefaultAttribute()
+  tb.resetAttributes()
   self.blocks[pos].resetColor()
   self.blocks[pos].isFlag = false
   self.blocks[pos].status = "o"
@@ -744,7 +777,26 @@ proc releaseCell(self:MineSweeper, pos:int): void =
 
 # マス周囲の爆弾の数を数える
 proc countBombAroundCell(self:MineSweeper, pos:int): void =
-  discard
+  let around: array[3, int] = [-1, 0, 1]
+  var bombCount: int = 0
+  for row in around:
+    # xがメイン画面の左端の外 or xがメイン画面の右端の外だったらcontinue
+    if self.mainWindow.cursor.x+row < 0 or self.mainWindow.cursor.x+row >= self.blc:
+      continue
+    for column in around:
+      # yがメイン画面の上端の外 or yがメイン画面の下端の外だったらcontinue
+      if self.mainWindow.cursor.y+column < 0 or self.mainWindow.cursor.y+column >= self.blc:
+        continue
+      if row == 0 and column == 0: # 自身のマスだったらcontinue
+        continue
+
+      try:
+        if self.blocks[pos+row+(column*self.blc)].isBomb:
+          bombCount.inc()
+      except IndexDefect:
+        continue
+
+  self.blocks[pos].bombsAround = bombCount
 
 #================================================================
 #
@@ -766,12 +818,14 @@ proc start*(self:MineSweeper): void =
 
 # ループ処理
 proc update*(self:MineSweeper): bool =
+  self.menuWindow.updateMenu() # メニュー画面更新
+
   let isPassed: bool = self.checkIfGamePassed() # ゲームクリア判定
   if isPassed:
+    tb.setAttribute(fgYellow, bgNone)
+    self.messageWindow.drawMessage("FINISH!!", reset=false)
     self.endGame()
     return true
-
-  self.menuWindow.updateMenu() # メニュー画面更新
 
   self.mainWindow.moveCursor() # カーソル移動操作受付
 
@@ -804,8 +858,9 @@ proc update*(self:MineSweeper): bool =
       return false
     
     elif self.blocks[cellPos].isBomb: # 爆弾に当たった時
-      setAttribute(fgRed, bgNone)
-      self.messageWindow.drawMessage("Boom!!")
+      tb.setAttribute(fgRed, bgNone)
+      self.messageWindow.drawMessage("Boom!!", reset=false)
+      tb.display()
       sleep(2000)
 
       var isContinue: bool = false
@@ -816,11 +871,14 @@ proc update*(self:MineSweeper): bool =
         self.remainingContinue.dec()
         return false
 
-      setAttribute(fgRed, bgNone)
-      self.messageWindow.drawMessage("Boom!!")
+      tb.setAttribute(fgRed, bgNone)
+      self.messageWindow.drawMessage("Boom!!", reset=false)
+      tb.display()
       self.instructionsWindow.resetActions()
       self.mainWindow.drawGameOverAnimation()
-      self.messageWindow.drawMessage("GAME OVER")
+      tb.setAttribute(fgRed, bgNone)
+      self.messageWindow.drawMessage("GAME OVER", reset=false)
+      tb.display()
       self.endGame()
       return true
 
@@ -833,7 +891,7 @@ proc update*(self:MineSweeper): bool =
     yOffset: int = 2
     xPos: int = self.mainWindow.cursor.x*2 + xOffset
     yPos: int = self.mainWindow.cursor.y + yOffset
-  setAttribute(self.blocks[cellPos].fg, self.blocks[cellPos].bg)
+  tb.setAttribute(self.blocks[cellPos].fg, self.blocks[cellPos].bg)
   tb.write(xPos, yPos, self.blocks[cellPos].status)
   tb.display()
   
