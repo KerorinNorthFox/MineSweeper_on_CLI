@@ -603,7 +603,7 @@ proc makeBlocks(self:MineSweeper): void =
   var count: int = 1
   for i in 0..<self.blc:
     for j in 0..<self.blc:
-      let cell = Blocks(id:count, x:j, y:i, isEmpty:false, status:"o")
+      let cell = Blocks(id:count, x:j, y:i, isEmpty:false, status:"o", fg:fgWhite, bg:bgNone)
       self.blocks.add(cell)
       count.inc()
 
@@ -709,6 +709,7 @@ proc endGame(self:MineSweeper): void =
 # 旗を置く
 proc placeFlag(self:MineSweeper, pos:int): void =
   setAttribute(fgRed, bgNone)
+  self.blocks[pos].setColor(fgRed, bgNone)
   self.blocks[pos].isFlag = true
   self.blocks[pos].status = "F"
   self.placedTotalFlags.inc()
@@ -716,25 +717,27 @@ proc placeFlag(self:MineSweeper, pos:int): void =
 # 旗を除ける
 proc removeFlag(self:MineSweeper, pos:int): void =
   setDefaultAttribute()
+  self.blocks[pos].resetColor()
   self.blocks[pos].isFlag = false
   self.blocks[pos].status = "o"
   self.placedTotalFlags.dec()
 
 # マスを解放
 proc releaseCell(self:MineSweeper, pos:int): void =
+  self.blocks[pos].resetColor()
   self.blocks[pos].isEmpty = true
   let bombsAround: int = self.blocks[pos].bombsAround
   if bombsAround != 0:
     if bombsAround == 1:
-      setAttribute(fgCyan, bgNone)
+      self.blocks[pos].setColor(fgCyan, bgNone)
     elif bombsAround == 2:
-      setAttribute(fgBlue, bgNone)
+      self.blocks[pos].setColor(fgBlue, bgNone)
     elif bombsAround == 3:
-      setAttribute(fgGreen, bgNone)
+      self.blocks[pos].setColor(fgGreen, bgNone)
     elif bombsAround == 4:
-      setAttribute(fgYellow, bgNone)
+      self.blocks[pos].setColor(fgYellow, bgNone)
     else:
-      setAttribute(fgMagenta, bgNone)
+      self.blocks[pos].setColor(fgMagenta, bgNone)
     self.blocks[pos].status = $bombsAround
   else:
     self.blocks[pos].status = " "
@@ -830,6 +833,7 @@ proc update*(self:MineSweeper): bool =
     yOffset: int = 2
     xPos: int = self.mainWindow.cursor.x*2 + xOffset
     yPos: int = self.mainWindow.cursor.y + yOffset
+  setAttribute(self.blocks[cellPos].fg, self.blocks[cellPos].bg)
   tb.write(xPos, yPos, self.blocks[cellPos].status)
   tb.display()
   
