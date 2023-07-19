@@ -235,7 +235,7 @@ proc moveCursor(self:MainWindow): void =
 
   while(true):
     self.drawCursor() # メイン画面とメニュー画面にカーソル描画
-    sleep(20)
+    sleep(GET_KEY_SLEEP_MS)
 
     let key = getKey()
     case key
@@ -438,7 +438,7 @@ proc selectChoices(self:MenuWindow): bool =
 
   while(true):
     self.drawCursor()
-    sleep(20)
+    sleep(GET_KEY_SLEEP_MS)
 
     let key = getKey()
     case key
@@ -491,7 +491,7 @@ proc selectContinue(self:MenuWindow): bool =
 
   while(true):
     self.drawCursor()
-    sleep(20)
+    sleep(GET_KEY_SLEEP_MS)
 
     let key = getKey()
     case key
