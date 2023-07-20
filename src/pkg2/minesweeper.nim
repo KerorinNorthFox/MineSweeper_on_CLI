@@ -79,6 +79,7 @@ type MineSweeper* = ref object
 var
   tb: TerminalBuffer
   game: MineSweeper
+  isNoColor: bool
 
 #----------------------------------------------------------------
 #                 Public proc
@@ -98,6 +99,7 @@ proc clearTerminal(): void =
 # 文字色を任意で設定
 proc setAttribute(self:var TerminalBuffer, fg:ForegroundColor, bg:BackgroundColor, isBright:bool=true): void =
   tb.resetAttributes()
+  if isNoColor: return
   tb.setForegroundColor(fg, isBright)
   tb.setBackgroundColor(bg)
 
@@ -168,7 +170,7 @@ proc resetMessage(self:MessageWindow): void
 #----------------------------------------------------------------
 #               MineSweeper Dec
 #----------------------------------------------------------------
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int): MineSweeper
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noColorFlag:bool): MineSweeper
 
 proc setting(self:MineSweeper, blc:int): void
 
@@ -781,8 +783,9 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 #
 #================================================================
 # ゲーム初期化処理
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int): MineSweeper =
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noColorFlag:bool): MineSweeper =
   tb = terminalbuffer
+  isNoColor = noColorFlag
   let ms = MineSweeper()
   ms.setting(blc)
   game = ms
