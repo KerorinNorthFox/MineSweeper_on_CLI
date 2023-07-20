@@ -246,25 +246,21 @@ proc moveCursor(self:MainWindow): void =
     of Key.Up, Key.K:
       if self.cursor.y == 0: # yが-1になるため処理しない
         continue
-      self.cursor.update()
       self.cursor.moveUp()
     # ---下移動---
     of Key.Down, Key.J:
       if self.cursor.y == game.blc-1: # yが上限を超えるため処理しない
         continue
-      self.cursor.update()
       self.cursor.moveDown()
     # ---右移動---
     of Key.Right, Key.L:
       if self.cursor.x == game.blc-1: # xが上限を超えるため処理しない
         continue
-      self.cursor.update()
       self.cursor.moveRight()
     # ---左移動---
     of Key.Left, Key.H:
       if self.cursor.x == 0: # xが-1になるため処理しない
         continue
-      self.cursor.update()
       self.cursor.moveLeft()
     # ---それ以外---
     else: continue
@@ -346,7 +342,7 @@ proc init(_:type MenuWindow, dpdWin:MainWindow): MenuWindow =
   result.continueChoices.add("No")
   result.width = WINDOW_WIDTH
   if result.defaultChoices.len < result.continueChoices.len:
-    result.height = result.texts.len+result.continueChoices.len
+    result.height = result.texts.len+result.continueChoices.len+1
   else:
     result.height = result.texts.len+result.defaultChoices.len+1
 

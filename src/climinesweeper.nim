@@ -39,6 +39,7 @@ proc main(blc:int): void =
     if isEnd:
       exitProc()
 
+# TODO: UIの色なしをオプションで指定できるようにする
 when isMainModule:
   let args = commandLineParams()
   try:
@@ -46,7 +47,7 @@ when isMainModule:
       main(5) # オプションなしのとき5マスでスタート
 
     elif args.len == 1:
-      let opt: string = args[0]
+      let opt: string = args[0] # TODO: argsはforで回す
       case opt
       of "-h", "--help":
         echo HELP # ヘルプを表示

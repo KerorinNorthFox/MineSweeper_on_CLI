@@ -31,18 +31,22 @@ type Cursor* = object
   preY*: int
 
 # ひとつ前のカーソル位置を更新
-proc update*(self:var Cursor): void =
+proc update(self:var Cursor): void =
   self.preX = self.x
   self.preY = self.y
 
 proc moveRight*(self:var Cursor): void =
+  self.update()
   self.x.inc()
 
 proc moveLeft*(self:var Cursor): void =
+  self.update()
   self.x.dec()
 
 proc moveUp*(self:var Cursor): void =
+  self.update()
   self.y.dec()
 
 proc moveDown*(self:var Cursor): void =
+  self.update()
   self.y.inc()
