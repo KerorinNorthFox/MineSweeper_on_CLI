@@ -8,12 +8,13 @@ const
   HELP: string = """description:
   Play Minesweeper on CLI.
 usage:
-  ./CLIMineSweeper [--version] [--help] <number>
+  ./CLIMineSweeper [--version] [--help] [--noColor] <number>
 options:
-  -h, --help             display the help
-  -v, --version          display the version
-  5 <= number <= 20      Set the number of cells and start the game
-  None                   Set the min number(5) of cells and start the game
+  -h, --help             display the help.
+  -v, --version          display the version.
+  --noColor              play without colors.
+  5 <= number <= 20      Set the number of vert and hor cells and start the game.
+  None                   Set the min number (5) of vert and hor cells and start the game.
 
 """
   VERSION: string = "MineSweeper on CLI Version v1.1.1\n"
@@ -43,9 +44,10 @@ proc main(blc:int, isNoColor:bool): void =
 when isMainModule:
   let args = commandLineParams()
 
-  var isNoColor: bool = false
-  var isQuit: bool = false
-  var defaultBlc: int = 5
+  var
+    isNoColor: bool = false
+    isQuit: bool = false
+    defaultBlc: int = 5
   for arg in args:
     case arg
     of "-h", "--help":
