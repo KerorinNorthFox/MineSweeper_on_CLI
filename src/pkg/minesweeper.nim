@@ -636,7 +636,7 @@ proc placeBombs(self:MineSweeper): void =
   var lines: int = 0
   for i in 0..<self.blc: # 行数分回す
     let bombsPerLine: int = rand(1..bombLimPerLine)
-    self.remainingBombs += bombsPerLine # FIXME: 爆弾の位置が被ってても爆弾の数が1足されるバグ
+    self.remainingBombs += bombsPerLine
 
     var count: int = 0
     var overlap: seq[int] = @[] # 被った値を一時的に保存
@@ -648,8 +648,8 @@ proc placeBombs(self:MineSweeper): void =
         if bombPos == n: # 爆弾の位置が被ってたら
           isBombSamePos = true
           break
-        if isBombSamePos:
-          continue
+      if isBombSamePos:
+        continue
 
       overlap.add(bombPos)
       self.blocks[lines*self.blc + bombPos].isBomb = true # (ラインの数*縦のブロック数)+爆弾の位置
