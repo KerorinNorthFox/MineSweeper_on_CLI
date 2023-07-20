@@ -874,5 +874,6 @@ proc update*(self:MineSweeper): bool =
   tb.setAttribute(cellBlock.fg, cellBlock.bg)
   tb.write(xPos, yPos, cellBlock.status)
   tb.display()
+  sleep(20)
   
   return false
