@@ -278,10 +278,11 @@ proc drawCursor(self:MainWindow): void =
     yPos: int = self.cursor.y + yOffset
     preCursorPos: int = self.cursor.preY*game.blc + self.cursor.preX # ひとつ前のカーソル位置
     cursorPos: int = self.cursor.y*game.blc + self.cursor.x # カーソル位置
-  tb.setAttribute(game.blocks[preCursorPos].fg, bgNone) # FIXME: --noColorのときカーソルが表示されない
+  tb.setAttribute(game.blocks[preCursorPos].fg, bgNone)
   tb.write(preXPos, preYPos, game.blocks[preCursorPos].status)
 
-  tb.setAttribute(fgBlack, bgWhite)
+  tb.setForegroundColor(fgBlack) # --noColorでもカーソルが表示されるようにする
+  tb.setBackgroundColor(bgWhite)
   tb.write(xPos, yPos, game.blocks[cursorPos].status)
   
   game.menuWindow.drawCursorPosition() # メニュー画面にカーソルの座標を表示
@@ -299,6 +300,9 @@ proc drawGameOverAnimation(self:MainWindow): void =
   for _ in 1..6:
     if flag:
       tb.setAttribute(fgRed, bgWhite)
+      if isNoColor:
+        tb.setForegroundColor(fgBlack) # --noColorでも点滅するようにする
+        tb.setBackgroundColor(bgWhite)
     else:
       tb.setAttribute(fgRed, bgNone)
     tb.write(xPos, yPos, "B")
@@ -632,7 +636,7 @@ proc placeBombs(self:MineSweeper): void =
   var lines: int = 0
   for i in 0..<self.blc: # 行数分回す
     let bombsPerLine: int = rand(1..bombLimPerLine)
-    self.remainingBombs += bombsPerLine
+    self.remainingBombs += bombsPerLine # FIXME: 爆弾の位置が被ってても爆弾の数が1足されるバグ
 
     var count: int = 0
     var overlap: seq[int] = @[] # 被った値を一時的に保存
