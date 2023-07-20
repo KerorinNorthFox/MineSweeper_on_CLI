@@ -101,7 +101,7 @@ proc setAttribute(self:var TerminalBuffer, fg:ForegroundColor, bg:BackgroundColo
   tb.setForegroundColor(fg, isBright)
   tb.setBackgroundColor(bg)
 
-proc showCursorPosDebug(): void =
+proc showCursorPosDebug(): void {.used.}  =
   tb.write(1, 30, " ".repeat(100))
   tb.write(1, 30, "cursorXPos:", $game.mainWindow.cursor.x, ", cursorYPos:", $game.mainWindow.cursor.y, ", oldCursorXPos:", $game.mainWindow.cursor.preX, ", oldCursorYPos:", $game.mainWindow.cursor.preY)
 
@@ -161,9 +161,9 @@ proc init(_:type MessageWindow, dpdWin:InstructionsWindow, mainWinWidth:int): Me
 
 proc draw(self:MessageWindow): void
 
-proc drawMessage(self:MessageWindow, text:string, reset:bool=true, fg:ForegroundColor=fgYellow): void
+proc drawMessage(self:MessageWindow, text:string, fg:ForegroundColor=fgYellow): void
 
-proc resetMessage(self:MessageWindow, reset:bool=true): void
+proc resetMessage(self:MessageWindow): void
 
 #----------------------------------------------------------------
 #               MineSweeper Dec
@@ -283,7 +283,6 @@ proc drawCursor(self:MainWindow): void =
   tb.write(xPos, yPos, game.blocks[cursorPos].status)
   
   game.menuWindow.drawCursorPosition() # メニュー画面にカーソルの座標を表示
-  showCursorPosDebug() # FIXME: デバッグ用
   tb.display()
 
 # ゲームオーバー時のアニメーションを表示
@@ -381,6 +380,7 @@ proc updateMenu(self:MenuWindow): void =
   self.draw()
   self.drawRemainingFlags()
   self.drawRemainingContinues()
+  tb.display()
 
 # 残り旗数を描画
 proc drawRemainingFlags(self:MenuWindow): void =
@@ -392,7 +392,6 @@ proc drawRemainingFlags(self:MenuWindow): void =
     yPos: int = self.pos.y + yOffset
   tb.write(xPos, yPos, " ".repeat(3))
   tb.write(xPos, yPos, $(game.remainingBombs-game.placedTotalFlags))
-  tb.display()
 
 # 残りコンティニュー数を描画
 proc drawRemainingContinues(self:MenuWindow): void =
@@ -404,7 +403,6 @@ proc drawRemainingContinues(self:MenuWindow): void =
     yPos: int = self.pos.y + yOffset
   tb.write(xPos, yPos, " ".repeat(3))
   tb.write(xPos, yPos, game.remainingContinue.`$`)
-  tb.display()
 
 # カーソル座標をメニュー画面に描画
 proc drawCursorPosition(self:MenuWindow): void =
@@ -416,7 +414,6 @@ proc drawCursorPosition(self:MenuWindow): void =
     yPos: int = self.pos.y + yOffset
   tb.write(xPos, yPos, " ".repeat(4))
   tb.write(xPos, yPos, chr(64+game.mainWindow.cursor.x+1).`$`, $(game.mainWindow.cursor.y+1))
-  tb.display()
 
 # メニュー選択
 proc selectChoices(self:MenuWindow): bool =
@@ -574,8 +571,8 @@ proc draw(self:MessageWindow): void =
   tb.drawRect(self.pos.x, self.pos.y, self.pos.x+self.width, self.pos.y+self.height)
 
 # メッセージを描画
-proc drawMessage(self:MessageWindow, text:string, reset:bool=true, fg:ForegroundColor=fgYellow): void =
-  self.resetMessage(reset=reset)
+proc drawMessage(self:MessageWindow, text:string, fg:ForegroundColor=fgYellow): void =
+  self.resetMessage()
   tb.setAttribute(fg, bgNone)
   let
     xOffset: int = 1
@@ -586,9 +583,8 @@ proc drawMessage(self:MessageWindow, text:string, reset:bool=true, fg:Foreground
   tb.display()
 
 # メッセージを消す
-proc resetMessage(self:MessageWindow, reset:bool=true): void =
-  if reset:
-    tb.resetAttributes()
+proc resetMessage(self:MessageWindow): void =
+  tb.resetAttributes()
   let
     xOffset: int = 1
     yOffset: int = 1
@@ -803,7 +799,7 @@ proc update*(self:MineSweeper): bool =
 
   let isPassed: bool = self.checkIfGamePassed() # ゲームクリア判定
   if isPassed:
-    self.messageWindow.drawMessage("FINISH!!", reset=false)
+    self.messageWindow.drawMessage("FINISH!!")
     self.endGame()
     return true
 
@@ -840,7 +836,7 @@ proc update*(self:MineSweeper): bool =
       return false
     
     elif cellBlock.isBomb: # 爆弾に当たった時
-      self.messageWindow.drawMessage("Boom!!", reset=false, fg=fgRed)
+      self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       tb.display()
       sleep(2000)
 
@@ -853,12 +849,12 @@ proc update*(self:MineSweeper): bool =
         return false
 
       tb.setAttribute(fgRed, bgNone)
-      self.messageWindow.drawMessage("Boom!!", reset=false, fg=fgRed)
+      self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       tb.display()
       self.instructionsWindow.resetActions()
       self.mainWindow.drawGameOverAnimation()
       tb.setAttribute(fgRed, bgNone)
-      self.messageWindow.drawMessage("GAME OVER", reset=false, fg=fgRed)
+      self.messageWindow.drawMessage("GAME OVER", fg=fgRed)
       tb.display()
       self.endGame()
       return true
