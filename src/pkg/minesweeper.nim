@@ -806,6 +806,14 @@ proc update*(self:MineSweeper): bool =
 
   let isPassed: bool = self.checkIfGamePassed() # ゲームクリア判定
   if isPassed:
+    let
+      xOffset: int = 4
+      yOffset: int = 2
+      xPos: int = self.mainWindow.cursor.x*2 + xOffset
+      yPos: int = self.mainWindow.cursor.y + yOffset
+      cellBlock: Blocks = self.blocks[self.mainWindow.cursor.y*self.blc + self.mainWindow.cursor.x]
+    tb.setAttribute(cellBlock.fg, cellBlock.bg)
+    tb.write(xPos, yPos, cellBlock.status) # 一番最後のマスを開く
     self.messageWindow.drawMessage("FINISH!!")
     self.endGame()
     return true
@@ -830,7 +838,7 @@ proc update*(self:MineSweeper): bool =
       self.removeFlag(cellPos)
       self.messageWindow.drawMessage("Removed the flag.")
     
-    elif not cellBlock.isFlag: # 旗が立っていないとき
+    else: # 旗が立っていないとき
       if self.remainingBombs-self.placedTotalFlags == 0: # 全ての旗を立てたとき
         self.messageWindow.drawMessage("All flags has been placed.")
         return false
