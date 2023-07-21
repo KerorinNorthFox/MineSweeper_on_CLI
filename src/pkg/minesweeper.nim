@@ -5,6 +5,8 @@ import
   std/strformat,
   std/sequtils,
   std/random,
+  std/httpclient,
+  std/json,
   ./utils
 
 #================================================================
@@ -17,6 +19,7 @@ import
 #                   Consts
 #----------------------------------------------------------------
 const
+  VERSION*: string = "v1.1.1"
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
   REMAINING_CONTINUE: int = 3 # 残りコンティニュー数
@@ -84,6 +87,16 @@ var
 #----------------------------------------------------------------
 #                 Public proc
 #----------------------------------------------------------------
+# githubから最新のリリースのバージョンを取得
+proc getLatestReleasedVersion(): string {.used.} = # 使ってない
+  let clt = newHttpClient()
+  var res: string
+  try:
+    res = clt.getContent("https://api.github.com/repos/KerorinNorthFox/MineSweeper_on_CLI/releases/latest") # github apiでリリースを取得
+  except OSError:
+    return "" # 取得に失敗したら何もしない
+  return res.parseJson()["name"].getStr() # リリースタグのバージョン取得
+
 # string型のseqの中身を結合
 proc concatSeq(stringSeq:seq[string]): string =
   var text: string = ""
@@ -798,9 +811,8 @@ proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noCol
 # 一回だけ呼ばれる処理
 proc start*(self:MineSweeper): void =
   self.drawWindow()
-  # TODO: ここにゲームの更新を表示する処理
 
-# ループ処理 # FIXME: ゲームクリア時に最後のマス目が変化しない
+# ループ処理
 proc update*(self:MineSweeper): bool =
   self.menuWindow.updateMenu() # メニュー画面更新
 

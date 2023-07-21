@@ -2,6 +2,7 @@ import
   illwill,
   std/os,
   std/strutils,
+  std/strformat,
   ./pkg/minesweeper
 
 const
@@ -17,7 +18,7 @@ options:
   None                   Set the min number (5) of vert and hor cells and start the game.
 
 """
-  VERSION: string = "MineSweeper on CLI Version v1.1.1\n"
+  GAME_VERSION: string = &"MineSweeper on CLI Version {VERSION}\n"
   MIN_BLOCK: int = 5 # 最大ブロック数
   MAX_BLOCK: int = 20 # 最小ブロック数
 
@@ -54,7 +55,7 @@ when isMainModule:
       echo HELP
       isQuit = true
     of "-v", "--version":
-      echo VERSION
+      echo GAME_VERSION
       isQuit = true
     of "--noColor":
       isNoColor = true
