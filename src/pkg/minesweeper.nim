@@ -5,8 +5,6 @@ import
   std/strformat,
   std/sequtils,
   std/random,
-  std/httpclient,
-  std/json,
   ./utils
 
 #================================================================
@@ -50,7 +48,7 @@ type
     texts: seq[string] # メニューテキスト
     defaultChoices: seq[string] # 選択肢1
     continueChoices: seq[string] # 選択肢2
-    mode: int # 選択肢のどれか
+    choice: int # 選択肢のどれか
 
   InstructionsWindow = ref object
     pos: Position
@@ -87,23 +85,6 @@ var
 #----------------------------------------------------------------
 #                 Public proc
 #----------------------------------------------------------------
-# githubから最新のリリースのバージョンを取得
-proc getLatestReleasedVersion(): string {.used.} = # 使ってない
-  let clt = newHttpClient()
-  var res: string
-  try:
-    res = clt.getContent("https://api.github.com/repos/KerorinNorthFox/MineSweeper_on_CLI/releases/latest") # github apiでリリースを取得
-  except OSError:
-    return "" # 取得に失敗したら何もしない
-  return res.parseJson()["name"].getStr() # リリースタグのバージョン取得
-
-# string型のseqの中身を結合
-proc concatSeq(stringSeq:seq[string]): string =
-  var text: string = ""
-  for elem in stringSeq:
-    text = text & elem
-  return $text
-
 # 画面をクリアして描画更新
 proc clearTerminal(): void =
   tb.clear()
@@ -446,7 +427,7 @@ proc selectChoices(self:MenuWindow): bool =
   ]
   game.instructionsWindow.drawActions(actions)
   game.messageWindow.drawMessage("Select choices.")
-  self.mode = 0
+  self.choice = 0
 
   while(true):
     self.drawCursor()
@@ -463,10 +444,7 @@ proc selectChoices(self:MenuWindow): bool =
       return true
     # ---上下キー---
     of Key.Up, Key.Down, Key.K, Key.J:
-      if self.mode == 0:
-        self.mode = 1
-      elif self.mode == 1:
-        self.mode = 0
+      self.choice = 1 - self.choice # choiceの値を0と1で入れ替える
     else: discard
 
   self.drawCursor(reset=true)
@@ -487,7 +465,7 @@ proc drawCursor(self:MenuWindow, reset:bool=false): void =
     tb.write(xPos, yPos+i, " ")
   if not reset:
     tb.setAttribute(fgYellow, bgNone)
-    tb.write(xPos, yPos+self.mode, ">")
+    tb.write(xPos, yPos+self.choice, ">")
   tb.display()
 
 # コンティニューするかの選択
@@ -499,7 +477,7 @@ proc selectContinue(self:MenuWindow): bool =
   game.instructionsWindow.drawActions(actions)
   self.drawChoices(@["Yes","No"])
   game.messageWindow.drawMessage("Do you want to continue?")
-  self.mode = 0
+  self.choice = 0
 
   while(true):
     self.drawCursor()
@@ -510,14 +488,11 @@ proc selectContinue(self:MenuWindow): bool =
     of Key.Enter:
       break
     of Key.Up, Key.Down, Key.K, Key.J:
-      if self.mode == 0:
-        self.mode = 1
-      elif self.mode == 1:
-        self.mode = 0
+      self.choice = 1 - self.choice # choiceの値を0と1で入れ替える
     else: discard
 
   self.drawCursor(reset=true)
-  if self.mode == 0: # Yes
+  if self.choice == 0: # Yes
     return true
   return false # No
 
@@ -698,15 +673,13 @@ proc makeWindowLines(self:MineSweeper): WindowLines =
       count.inc()
     line2D.add(line)
 
-  result.firstLine = concatSeq(firstLine)
-  result.secondLine = concatSeq(secondLine)
+  result.firstLine = firstLine.join()
+  result.secondLine = secondLine.join()
 
-  var isSkipElem: bool = true
   for elem in line2D:
-    if isSkipElem:
-      isSkipElem = false
+    if elem == line2D[0]: # 最初だけスキップ
       continue
-    result.otherLines.add(concatSeq(elem))
+    result.otherLines.add(elem.join())
 
 # ゲームクリアしたかの判定
 proc checkIfGamePassed(self:MineSweeper): bool =
@@ -845,7 +818,7 @@ proc update*(self:MineSweeper): bool =
     self.messageWindow.drawMessage("The cell has been already opened.")
     return false
 
-  if self.menuWindow.mode == 0: # 旗を立てる/除ける
+  if self.menuWindow.choice == 0: # 旗を立てる/除ける
     if cellBlock.isFlag: # 旗が立っているとき
       self.removeFlag(cellPos)
       self.messageWindow.drawMessage("Removed the flag.")
@@ -857,7 +830,7 @@ proc update*(self:MineSweeper): bool =
       self.placeFlag(cellPos)
       self.messageWindow.drawMessage("Placed the flag.")
 
-  elif self.menuWindow.mode == 1: # マス目解放
+  elif self.menuWindow.choice == 1: # マス目解放
     if cellBlock.isFlag: # 旗が立っているとき
       self.messageWindow.drawMessage("The flag has been already placed")
       return false
