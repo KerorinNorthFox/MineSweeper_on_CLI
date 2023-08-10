@@ -165,7 +165,7 @@ proc makeBlocks(self:MineSweeper): void
 
 proc placeBombs(self:MineSweeper): void
 
-proc drawWindow(self:MineSweeper): void
+proc drawAllWindow(self:MineSweeper): void
 
 proc makeWindowLines(self:MineSweeper): WindowLines
 
@@ -607,8 +607,7 @@ proc makeBlocks(self:MineSweeper): void =
   var count: int = 1
   for i in 0..<self.blc:
     for j in 0..<self.blc:
-      let cell = Blocks(id:count, x:j, y:i, isEmpty:false, status:"o", fg:fgWhite, bg:bgNone)
-      self.blocks.add(cell)
+      self.blocks.add(Blocks(id:count, x:j, y:i, isEmpty:false, status:"o", fg:fgWhite, bg:bgNone))
       count.inc()
 
 # 爆弾をランダムに配置 TODO: chatgptのコードでHashsetを使って爆弾の重複辺りを簡略できる?
@@ -645,7 +644,7 @@ proc placeBombs(self:MineSweeper): void =
     lines.inc()
 
 # 画面を描画
-proc drawWindow(self:MineSweeper): void =
+proc drawAllWindow(self:MineSweeper): void =
   clearTerminal()
   self.mainWindow.draw()
   self.menuWindow.draw()
@@ -682,9 +681,8 @@ proc makeWindowLines(self:MineSweeper): WindowLines =
 # ゲームクリアしたかの判定
 proc checkIfGamePassed(self:MineSweeper): bool =
   for cell in self.blocks:
-    if not cell.isFlag:
-      if cell.isBomb or not cell.isEmpty: # 旗が立っていない and (爆弾がある or 解放されていない) => クリアしてない
-        return false
+    if not cell.isFlag and (cell.isBomb or not cell.isEmpty): # 旗が立っていない and (爆弾がある or 解放されていない) => クリアしてない
+      return false
   return true
 
 # ゲーム終了処理
@@ -693,7 +691,6 @@ proc endGame(self:MineSweeper): void =
     "Enter key : Exit the game",
     "Ctrl+c : Exit the game"
   ])
-
   var count: int = 0
   while(true):
     self.mainWindow.drawBomb(count)
@@ -701,8 +698,7 @@ proc endGame(self:MineSweeper): void =
     sleep(90 - (self.blc*4))
     let key = getKey()
     case key
-    of Key.Enter:
-      break
+    of Key.Enter: break
     else: discard
 
 # 旗を置く
@@ -745,15 +741,11 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
   var bombCount: int = 0
   for row in around:
     # xがメイン画面の左端の外 or xがメイン画面の右端の外だったらcontinue
-    if self.mainWindow.cursor.x+row < 0 or self.mainWindow.cursor.x+row >= self.blc:
-      continue
+    if self.mainWindow.cursor.x+row < 0 or self.mainWindow.cursor.x+row >= self.blc: continue
     for column in around:
       # yがメイン画面の上端の外 or yがメイン画面の下端の外だったらcontinue
-      if self.mainWindow.cursor.y+column < 0 or self.mainWindow.cursor.y+column >= self.blc:
-        continue
-      if row == 0 and column == 0: # 自身のマスだったらcontinue
-        continue
-
+      if self.mainWindow.cursor.y+column < 0 or self.mainWindow.cursor.y+column >= self.blc: continue
+      if row == 0 and column == 0: continue # 自身のマスだったらcontinue
       try:
         if self.blocks[pos+row+(column*self.blc)].isBomb:
           bombCount.inc()
@@ -769,8 +761,8 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 #================================================================
 # ゲーム初期化処理
 proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noColorFlag:bool): MineSweeper =
-  tb = terminalbuffer
   isNoColor = noColorFlag
+  tb = terminalbuffer
   let ms = MineSweeper()
   ms.setting(blc)
   game = ms
@@ -778,7 +770,7 @@ proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noCol
 
 # 一回だけ呼ばれる処理
 proc start*(self:MineSweeper): void =
-  self.drawWindow()
+  self.drawAllWindow()
 
 # ループ処理
 proc update*(self:MineSweeper): bool =
@@ -817,7 +809,6 @@ proc update*(self:MineSweeper): bool =
     if cellBlock.isFlag: # 旗が立っているとき
       self.removeFlag(cellPos)
       self.messageWindow.drawMessage("Removed the flag.")
-    
     else: # 旗が立っていないとき
       if self.remainingBombs-self.placedTotalFlags == 0: # 全ての旗を立てたとき
         self.messageWindow.drawMessage("All flags has been placed.")
@@ -829,27 +820,19 @@ proc update*(self:MineSweeper): bool =
     if cellBlock.isFlag: # 旗が立っているとき
       self.messageWindow.drawMessage("The flag has been already placed")
       return false
-    
     elif cellBlock.isBomb: # 爆弾に当たった時
       self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       sleep(2000)
-
-      var isContinue: bool = false
-      if self.remainingContinue != 0:
-        isContinue = self.menuWindow.selectContinue()
-      if isContinue: # コンティニュー処理
+      if self.remainingContinue != 0 and self.menuWindow.selectContinue(): # コンティニュー処理
         self.messageWindow.resetMessage()
         self.remainingContinue.dec()
         return false
-
-      Draw(fgRed, bgNone, isBright=true):
-        self.messageWindow.drawMessage("Boom!!", fg=fgRed)
+      self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       self.instructionsWindow.resetActions()
       self.mainWindow.drawGameOverAnimation()
       self.messageWindow.drawMessage("GAME OVER", fg=fgRed)
       self.endGame()
       return true
-
     self.countBombAroundCell(cellPos)
     self.releaseCell(cellPos)
     self.messageWindow.drawMessage("Released the cell.")
@@ -859,7 +842,7 @@ proc update*(self:MineSweeper): bool =
     yOffset: int = 2
     xPos: int = self.mainWindow.cursor.x*2 + xOffset
     yPos: int = self.mainWindow.cursor.y + yOffset
-  Draw(cellBlock.fg, cellBlock.bg, isBright=true):
+  Draw(cellBlock.fg, cellBlock.bg, isBright=true): # マス目更新
     tb.write(xPos, yPos, cellBlock.status)
   sleep(20)
   
