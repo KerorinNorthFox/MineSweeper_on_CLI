@@ -20,9 +20,13 @@ const
   VERSION*: string = "v1.1.1"
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
-  REMAINING_CONTINUE: int = 3 # 残りコンティニュー数
   WINDOW_WIDTH: int = 40 # ウィンドウの横幅
   GET_KEY_SLEEP_MS: int = 20 # キー入力のスリープタイム
+
+when system.hostOS == "linux":
+  const IS_BRIGHT: bool = true
+else:
+  const IS_BRIGHT: bool = false
 
 #----------------------------------------------------------------
 #                   Types
@@ -80,6 +84,8 @@ type MineSweeper* = ref object
 var
   tb: TerminalBuffer
   game: MineSweeper
+  remainingContinue: int
+  isInfinity: bool
   isNoColor: bool
 
 #----------------------------------------------------------------
@@ -157,7 +163,7 @@ proc resetMessage(self:MessageWindow): void
 #----------------------------------------------------------------
 #               MineSweeper Dec
 #----------------------------------------------------------------
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noColorFlag:bool): MineSweeper
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInf:bool, noColorFlag:bool): MineSweeper
 
 proc setting(self:MineSweeper, blc:int): void
 
@@ -185,11 +191,14 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void
 #               Template
 #----------------------------------------------------------------
 template Draw(fg:ForegroundColor, bg:BackgroundColor, isBright:bool, body: untyped): untyped =
+  var bright = isBright
+  if IS_BRIGHT:
+    bright = false
   if isNoColor:
     tb.setForegroundColor(if fg==fgBlack: fg else: fgNone)
     tb.setBackgroundColor(if bg==bgWhite: bg else: bgNone)
   else:
-    tb.setForegroundColor(fg, isBright)
+    tb.setForegroundColor(fg, bright)
     tb.setBackgroundColor(bg)
   body
   tb.display()
@@ -197,8 +206,10 @@ template Draw(fg:ForegroundColor, bg:BackgroundColor, isBright:bool, body: untyp
 template DrawAnimation(fgColor: ForegroundColor, isBright: bool, count: int, body: untyped): untyped =
   var
     fg: ForegroundColor = if isNoColor: fgWhite else: fgColor
-    bg: BackgroundColor = bgBlack
+    bg: BackgroundColor = bgNone
     bright: bool = if isNoColor: false else: isBright
+  if IS_BRIGHT:
+    bright = false
   for _ in 1..count:
     tb.setForegroundColor(fg, bright)
     tb.setBackgroundColor(bg)
@@ -210,7 +221,7 @@ template DrawAnimation(fgColor: ForegroundColor, isBright: bool, count: int, bod
       fg = fgWhite
     elif fg == fgWhite:
       fg = fgBlack
-    bg = if bg==bgWhite: bgBlack else: bgWhite
+    bg = if bg==bgWhite: bgNone else: bgWhite
 
 #================================================================
 #
@@ -407,7 +418,10 @@ proc drawRemainingContinues(self:MenuWindow): void =
     yPos: int = self.pos.y + yOffset
   Draw(fgCyan, bgNone, isBright=true):
     tb.write(xPos, yPos, " ".repeat(3))
-    tb.write(xPos, yPos, game.remainingContinue.`$`)
+    if isInfinity:
+      tb.write(xPos, yPos, "Infinity!!")
+    else:
+      tb.write(xPos, yPos, game.remainingContinue.`$`)
 
 # カーソル座標をメニュー画面に描画
 proc drawCursorPosition(self:MenuWindow): void =
@@ -425,7 +439,7 @@ proc selectChoices(self:MenuWindow): bool =
   # 指示ウィンドウに指示を描画
   game.instructionsWindow.drawActions(@[
     "Arrow key[Up, Down] : Select choices",
-    "JK key : Select choices",
+    "JK key[Up, Down] : Select choices",
     "Enter key : Decide a choice",
     "Escape key : Back to previous",
     "Ctrl+c : Quit the game"
@@ -595,7 +609,7 @@ proc setting(self:MineSweeper, blc:int): void =
   self.makeBlocks()
   self.placeBombs()
   self.placedTotalFlags = 0
-  self.remainingContinue = REMAINING_CONTINUE
+  self.remainingContinue = remainingContinue
   self.mainWindow = MainWindow.init(self)
   self.menuWindow = MenuWindow.init(self.mainWindow)
   self.instructionsWindow = InstructionsWindow.init(self.menuWindow)
@@ -760,7 +774,9 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 #
 #================================================================
 # ゲーム初期化処理
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, noColorFlag:bool): MineSweeper =
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInf:bool, noColorFlag:bool): MineSweeper =
+  remainingContinue = continueNum
+  isInfinity = isInf
   isNoColor = noColorFlag
   tb = terminalbuffer
   let ms = MineSweeper()
@@ -823,7 +839,7 @@ proc update*(self:MineSweeper): bool =
     elif cellBlock.isBomb: # 爆弾に当たった時
       self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       sleep(2000)
-      if self.remainingContinue != 0 and self.menuWindow.selectContinue(): # コンティニュー処理
+      if (self.remainingContinue != 0 or isInfinity == true) and self.menuWindow.selectContinue(): # コンティニュー処理
         self.messageWindow.resetMessage()
         self.remainingContinue.dec()
         return false
