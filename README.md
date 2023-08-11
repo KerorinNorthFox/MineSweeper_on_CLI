@@ -15,10 +15,14 @@ $ nimble install climinesweeper
 $ climinesweeper
 ```
 ```
-option:
-  -v, --version        display the version
-  -h, --help           display the help
-  <5 <= number <= 20>  Set the number of cells and start the game
+options:
+  -h, --help             display the help.
+  -v, --version          display the version.
+  --noColor              play without colors.
+  --continue [number]    play with a set number of continue.
+  --infinite             play without Boom!!.
+  [5 <= number <= 20]    Set the number of vert and hor cells and start the game.
+  None                   Set the min number (5) of vert and hor cells and start the game.
 ```
 
 # Requirement

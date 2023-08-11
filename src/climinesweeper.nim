@@ -2,20 +2,25 @@ import
   illwill,
   std/os,
   std/strutils,
+  std/strformat,
   ./pkg/minesweeper
 
 const
   HELP: string = """description:
   Play Minesweeper on CLI.
 usage:
-  ./CLIMineSweeper [--version] [--help] <number>
+  ./CLIMineSweeper [--version] [--help] [--noColor] <number>
 options:
-  -h, --help             display the help
-  -v, --version          display the version
-  <5 <= number <= 20>    Set the number of cells and start the game
-  None                   Set the min number(5) of cells and start the game
+  -h, --help             display the help.
+  -v, --version          display the version.
+  --noColor              play without colors.
+  --continue [number]    play with a set number of continue.
+  --infinite             play without Boom!!.
+  [5 <= number <= 20]    Set the number of vert and hor cells and start the game.
+  None                   Set the min number (5) of vert and hor cells and start the game.
+
 """
-  VERSION: string = "MineSweeper on CLI Version v1.1.1"
+  GAME_VERSION: string = &"MineSweeper on CLI Version {VERSION}\n"
   MIN_BLOCK: int = 5 # 最大ブロック数
   MAX_BLOCK: int = 20 # 最小ブロック数
 
@@ -24,14 +29,14 @@ proc exitProc() {.noconv.} =
   showCursor()
   quit(0)
 
-proc main(blc:int): void =
+proc main(blc:int, defaultContinue: int, isInfinity:bool, isNoColor:bool): void =
   illwillInit(fullscreen=true)
   setControlCHook(exitProc)
   hideCursor()
   # illwillの画面作成
   var tb: TerminalBuffer = newTerminalBuffer(terminalWidth(), terminalHeight())
   # minesweeper初期化
-  var game: MineSweeper = MineSweeper.init(tb, blc)
+  var game: MineSweeper = MineSweeper.init(tb, blc, defaultContinue, isInfinity, isNoColor)
 
   game.start()
   while(true):
@@ -41,22 +46,34 @@ proc main(blc:int): void =
 
 when isMainModule:
   let args = commandLineParams()
-  try:
-    if args.len == 0:
-      main(5)
-    elif args.len == 1:
-      let opt: string = args[0]
-      case opt
-      of "-h", "--help":
-        echo HELP
-      of "-v", "--version":
-        echo VERSION
+
+  var
+    isSkip: bool = false
+    isQuit: bool = false
+    isNoColor: bool = false
+    defaultContinue: int = 3
+    isInfinity: bool = false
+    defaultBlc: int = 5
+  for i, arg in args:
+    if isSkip:
+      isSkip = false
+      continue
+    try:
+      case arg
+      of "-h", "--help": echo HELP; isQuit = true
+      of "-v", "--version": echo GAME_VERSION; isQuit = true
+      of "--noColor": isNoColor = true
+      of "--continue": defaultContinue = args[i+1].parseInt; isSkip = true
+      of "--infinite": isInfinity = true
       else:
-        let blc: int = opt.parseInt
-        if blc >= MIN_BLOCK and blc <= MAX_BLOCK:
-          main(blc)
+        let blc: int = arg.parseInt
+        if blc>=MIN_BLOCK and blc<=MAX_BLOCK:
+          defaultBlc = blc
         else: raise
-    else: raise
-  except:
-    echo "[Error]: Invalid command args."
-    quit(1)
+
+    except:
+      echo "[Error]: Invalid command args."
+      quit(1)
+
+  if isQuit: quit(0)
+  main(defaultBlc, defaultContinue, isInfinity, isNoColor)
