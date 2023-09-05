@@ -5,6 +5,7 @@ import
   std/strformat,
   std/sequtils,
   std/random,
+  std/streams,
   ./utils
 
 #================================================================
@@ -187,6 +188,7 @@ proc releaseCell(self:MineSweeper, pos:int): void
 
 proc countBombAroundCell(self:MineSweeper, pos:int): void
 
+proc saveProgress(self:MineSweeper): void
 #----------------------------------------------------------------
 #               Template
 #----------------------------------------------------------------
@@ -258,6 +260,7 @@ proc moveCursor(self:MainWindow): void =
     "Arrow key : Move cursor",
     "HJKL key: Move cursor",
     "Enter key: Select the cell",
+    "S key: Save the progress",
     "Ctrl+c : Quit the game"
   ])
 
@@ -270,6 +273,12 @@ proc moveCursor(self:MainWindow): void =
     # ---決定---
     of Key.Enter:
       return
+    # ---セーブ---
+    of Key.S:
+      game.saveProgress()
+      illwillDeinit()
+      showCursor()
+      quit(0)
     # ---上移動---
     of Key.Up, Key.K:
       if self.cursor.y == 0: # yが-1になるため処理しない
@@ -768,6 +777,19 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 
   self.blocks[pos].bombsAround = bombCount
 
+# ゲームをセーブする
+proc saveProgress(self:MineSweeper): void =
+  var f = newFileStream("blocks.save", fmWrite)
+  if not f.isNil:
+    f.write(self)
+  f.flush()
+
+# ゲームをロードする
+proc loadProgress(self:MineSweeper): void =
+  var f = newFileStream("blocks.save", fmRead)
+  discard f.readData(self.unsafeAddr, self.sizeof)
+
+
 #================================================================
 #
 #                      Utilization
@@ -778,7 +800,9 @@ proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, conti
   remainingContinue = continueNum
   isInfinity = isInf
   isNoColor = noColorFlag
+  # TODO: 上の三つはセーブデータから復旧
   tb = terminalbuffer
+  # TODO: セーブが存在するときはそのセーブのMineSweeperオブジェクトを入れる
   let ms = MineSweeper()
   ms.setting(blc)
   game = ms
