@@ -189,6 +189,8 @@ proc releaseCell(self:MineSweeper, pos:int): void
 proc countBombAroundCell(self:MineSweeper, pos:int): void
 
 proc saveProgress(self:MineSweeper): void
+
+proc loadProgress(self:MineSweeper): bool
 #----------------------------------------------------------------
 #               Template
 #----------------------------------------------------------------
@@ -785,9 +787,12 @@ proc saveProgress(self:MineSweeper): void =
   f.flush()
 
 # ゲームをロードする
-proc loadProgress(self:MineSweeper): void =
+proc loadProgress(self:MineSweeper): bool =
   var f = newFileStream("blocks.save", fmRead)
+  if f.isNil:
+    return false
   discard f.readData(self.unsafeAddr, self.sizeof)
+  return true
 
 
 #================================================================
