@@ -5,8 +5,9 @@ import
   std/strformat,
   std/sequtils,
   std/random,
-  std/streams,
   ./utils
+
+from jsony import toJson, fromJson
 
 #================================================================
 #
@@ -72,6 +73,8 @@ type MineSweeper* = ref object
   doubleBlc: int
   placedTotalFlags: int # 現在立っている旗の総数
   remainingContinue: int # 残りコンティニュー数
+  isInfinity: bool
+  isNoColor: bool
   remainingBombs: int # 現在の残り爆弾総数
 
   mainWindow: MainWindow
@@ -85,9 +88,6 @@ type MineSweeper* = ref object
 var
   tb: TerminalBuffer
   game: MineSweeper
-  remainingContinue: int
-  isInfinity: bool
-  isNoColor: bool
 
 #----------------------------------------------------------------
 #                 Public proc
@@ -100,6 +100,13 @@ proc clearTerminal(): void =
 proc showCursorPosDebug(): void {.used.}  =
   tb.write(1, 30, " ".repeat(100))
   tb.write(1, 30, "cursorXPos:", $game.mainWindow.cursor.x, ", cursorYPos:", $game.mainWindow.cursor.y, ", oldCursorXPos:", $game.mainWindow.cursor.preX, ", oldCursorYPos:", $game.mainWindow.cursor.preY)
+
+when hostOS == "windows":
+  proc removeSaveFile(): void =
+    discard execShellCmd("del save.txt")
+else:
+  proc removeSaveFile(): void =
+    removeFile("save.txt")
 
 #----------------------------------------------------------------
 #               Main Window Dec
@@ -164,9 +171,9 @@ proc resetMessage(self:MessageWindow): void
 #----------------------------------------------------------------
 #               MineSweeper Dec
 #----------------------------------------------------------------
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInf:bool, noColorFlag:bool): MineSweeper
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool): MineSweeper
 
-proc setting(self:MineSweeper, blc:int): void
+proc setting(self:MineSweeper, blc:int, remainingContinue:int, isInfinity:bool, isNoColor:bool): void
 
 proc makeBlocks(self:MineSweeper): void
 
@@ -190,7 +197,7 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void
 
 proc saveProgress(self:MineSweeper): void
 
-proc loadProgress(self:MineSweeper): bool
+proc loadProgress(self:var MineSweeper): bool
 #----------------------------------------------------------------
 #               Template
 #----------------------------------------------------------------
@@ -198,7 +205,7 @@ template Draw(fg:ForegroundColor, bg:BackgroundColor, isBright:bool, body: untyp
   var bright = isBright
   if IS_BRIGHT:
     bright = false
-  if isNoColor:
+  if game.isNoColor:
     tb.setForegroundColor(if fg==fgBlack: fg else: fgNone)
     tb.setBackgroundColor(if bg==bgWhite: bg else: bgNone)
   else:
@@ -209,9 +216,9 @@ template Draw(fg:ForegroundColor, bg:BackgroundColor, isBright:bool, body: untyp
 
 template DrawAnimation(fgColor: ForegroundColor, isBright: bool, count: int, body: untyped): untyped =
   var
-    fg: ForegroundColor = if isNoColor: fgWhite else: fgColor
+    fg: ForegroundColor = if game.isNoColor: fgWhite else: fgColor
     bg: BackgroundColor = bgNone
-    bright: bool = if isNoColor: false else: isBright
+    bright: bool = if game.isNoColor: false else: isBright
   if IS_BRIGHT:
     bright = false
   for _ in 1..count:
@@ -429,7 +436,7 @@ proc drawRemainingContinues(self:MenuWindow): void =
     yPos: int = self.pos.y + yOffset
   Draw(fgCyan, bgNone, isBright=true):
     tb.write(xPos, yPos, " ".repeat(3))
-    if isInfinity:
+    if game.isInfinity:
       tb.write(xPos, yPos, "Infinity!!")
     else:
       tb.write(xPos, yPos, game.remainingContinue.`$`)
@@ -614,13 +621,15 @@ proc resetMessage(self:MessageWindow): void =
 #               MineSweeper Impl
 #----------------------------------------------------------------
 # プロパティに値をセットしたり
-proc setting(self:MineSweeper, blc:int): void =
+proc setting(self:MineSweeper, blc:int, remainingContinue:int, isInfinity:bool, isNoColor:bool): void =
   self.blc = blc
   self.doubleBlc = blc*2
-  self.makeBlocks()
-  self.placeBombs()
   self.placedTotalFlags = 0
   self.remainingContinue = remainingContinue
+  self.isInfinity = isInfinity
+  self.isNoColor = isNoColor
+  self.makeBlocks()
+  self.placeBombs()
   self.mainWindow = MainWindow.init(self)
   self.menuWindow = MenuWindow.init(self.mainWindow)
   self.instructionsWindow = InstructionsWindow.init(self.menuWindow)
@@ -781,19 +790,28 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 
 # ゲームをセーブする
 proc saveProgress(self:MineSweeper): void =
-  var f = newFileStream("blocks.save", fmWrite)
-  if not f.isNil:
-    f.write(self)
-  f.flush()
+  # TODO: 並列化してファイルに書き込みに変更
+  var f: File = open("save.txt", FileMode.fmWrite)
+  let data: string = self.toJson()
+  f.writeLine(data)
+  f.close()
+  # var f = newFileStream("blocks.save", fmWrite)
+  # f.write(self)
+  # f.flush()
 
 # ゲームをロードする
-proc loadProgress(self:MineSweeper): bool =
-  var f = newFileStream("blocks.save", fmRead)
-  if f.isNil:
+proc loadProgress(self:var MineSweeper): bool =
+  # TODO: 読み込んだバイト列をオブジェクトに戻す
+  var f: File
+  try:
+    f = open("save.txt", FileMode.fmRead)
+    let data: string = f.readAll()
+    self = data.fromJson(MineSweeper)
+    f.close()
+    removeSaveFile()
+  except IOError:
     return false
-  discard f.readData(self.unsafeAddr, self.sizeof)
   return true
-
 
 #================================================================
 #
@@ -801,15 +819,12 @@ proc loadProgress(self:MineSweeper): bool =
 #
 #================================================================
 # ゲーム初期化処理
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInf:bool, noColorFlag:bool): MineSweeper =
-  remainingContinue = continueNum
-  isInfinity = isInf
-  isNoColor = noColorFlag
-  # TODO: 上の三つはセーブデータから復旧
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool): MineSweeper =
   tb = terminalbuffer
-  # TODO: セーブが存在するときはそのセーブのMineSweeperオブジェクトを入れる
-  let ms = MineSweeper()
-  ms.setting(blc)
+  var ms = MineSweeper()
+  var isLoaded = ms.loadProgress()
+  if not isLoaded:
+    ms.setting(blc, continueNum, isInfinity, isNoColor)
   game = ms
   return ms
 
@@ -868,7 +883,7 @@ proc update*(self:MineSweeper): bool =
     elif cellBlock.isBomb: # 爆弾に当たった時
       self.messageWindow.drawMessage("Boom!!", fg=fgRed)
       sleep(2000)
-      if (self.remainingContinue != 0 or isInfinity == true) and self.menuWindow.selectContinue(): # コンティニュー処理
+      if (self.remainingContinue != 0 or self.isInfinity == true) and self.menuWindow.selectContinue(): # コンティニュー処理
         self.messageWindow.resetMessage()
         self.remainingContinue.dec()
         return false
