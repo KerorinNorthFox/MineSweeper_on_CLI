@@ -19,7 +19,7 @@ from jsony import toJson, fromJson
 #                   Consts
 #----------------------------------------------------------------
 const
-  VERSION*: string = "v1.2.1"
+  VERSION*: string = "v1.2.2"
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
   WINDOW_WIDTH: int = 40 # ウィンドウの横幅
