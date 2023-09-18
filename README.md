@@ -24,4 +24,5 @@ Options:
 # Requirement
 - nim >= 1.6.8
 - illwill >= 0.3.0
+- jsony >= 1.1.5
 
