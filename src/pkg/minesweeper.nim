@@ -797,16 +797,17 @@ proc saveProgress(self:MineSweeper): void =
 
 # ゲームをロードする
 proc loadProgress(self:var MineSweeper, isNew:bool): bool =
-  if isNew: return false
   var f: File
   try:
     f = open("save.txt", FileMode.fmRead)
   except IOError:
     return false
   let data: string = f.readAll()
-  self = data.fromJson(MineSweeper)
   f.close()
   removeSaveFile()
+  if isNew:
+    return false
+  self = data.fromJson(MineSweeper)
   return true
 
 #================================================================
