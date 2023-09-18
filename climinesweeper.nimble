@@ -12,6 +12,7 @@ bin           = @["climinesweeper"]
 
 requires "nim >= 1.6.8"
 requires "illwill >= 0.3.0"
+requires "jsony >= 1.1.5"
 
 import os, strformat
 
