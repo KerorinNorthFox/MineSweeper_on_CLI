@@ -13,9 +13,10 @@ usage:
 options:
   -h, --help             display the help.
   -v, --version          display the version.
-  --noColor              play without colors.
-  --continue [number]    play with a set number of continue.
-  --infinite             play without Boom!!.
+  --noColor              Play without colors.
+  --continue [number]    Play with a set number of continue.
+  --infinite             Play without Boom!!.
+  --new                  Discard save file and play a new game
   [5 <= number <= 20]    Set the number of vert and hor cells and start the game.
   None                   Set the min number (5) of vert and hor cells and start the game.
 
@@ -29,14 +30,14 @@ proc exitProc() {.noconv.} =
   showCursor()
   quit(0)
 
-proc main(blc:int, defaultContinue: int, isInfinity:bool, isNoColor:bool): void =
+proc main(blc:int, defaultContinue: int, isInfinity:bool, isNoColor:bool, isNew:bool): void =
   illwillInit(fullscreen=true)
   setControlCHook(exitProc)
   hideCursor()
   # illwillの画面作成
   var tb: TerminalBuffer = newTerminalBuffer(terminalWidth(), terminalHeight())
   # minesweeper初期化
-  var game: MineSweeper = MineSweeper.init(tb, blc, defaultContinue, isInfinity, isNoColor)
+  var game: MineSweeper = MineSweeper.init(tb, blc, defaultContinue, isInfinity, isNoColor, isNew)
 
   game.start()
   while(true):
@@ -53,6 +54,7 @@ when isMainModule:
     isNoColor: bool = false
     defaultContinue: int = 3
     isInfinity: bool = false
+    isNew: bool = false
     defaultBlc: int = 5
   for i, arg in args:
     if isSkip:
@@ -65,6 +67,7 @@ when isMainModule:
       of "--noColor": isNoColor = true
       of "--continue": defaultContinue = args[i+1].parseInt; isSkip = true
       of "--infinite": isInfinity = true
+      of "--new": isNew = true
       else:
         let blc: int = arg.parseInt
         if blc>=MIN_BLOCK and blc<=MAX_BLOCK:
@@ -76,4 +79,4 @@ when isMainModule:
       quit(1)
 
   if isQuit: quit(0)
-  main(defaultBlc, defaultContinue, isInfinity, isNoColor)
+  main(defaultBlc, defaultContinue, isInfinity, isNoColor, isNew)

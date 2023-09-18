@@ -19,7 +19,7 @@ from jsony import toJson, fromJson
 #                   Consts
 #----------------------------------------------------------------
 const
-  VERSION*: string = "v1.2.0"
+  VERSION*: string = "v1.2.1"
   BLC_LIM_ARRAY: array[7,int] = [7, 9, 11, 13, 15, 17, 20]
   BOMB_LIM_ARRAY: array[7,int] = [2, 3, 4, 5, 6, 7, 8]
   WINDOW_WIDTH: int = 40 # ウィンドウの横幅
@@ -171,7 +171,7 @@ proc resetMessage(self:MessageWindow): void
 #----------------------------------------------------------------
 #               MineSweeper Dec
 #----------------------------------------------------------------
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool): MineSweeper
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool, isNew:bool): MineSweeper
 
 proc setting(self:MineSweeper, blc:int, remainingContinue:int, isInfinity:bool, isNoColor:bool): void
 
@@ -197,7 +197,7 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void
 
 proc saveProgress(self:MineSweeper): void
 
-proc loadProgress(self:var MineSweeper): bool
+proc loadProgress(self:var MineSweeper, isNew:bool): bool
 #----------------------------------------------------------------
 #               Template
 #----------------------------------------------------------------
@@ -790,27 +790,23 @@ proc countBombAroundCell(self:MineSweeper, pos:int): void =
 
 # ゲームをセーブする
 proc saveProgress(self:MineSweeper): void =
-  # TODO: 並列化してファイルに書き込みに変更
   var f: File = open("save.txt", FileMode.fmWrite)
   let data: string = self.toJson()
   f.writeLine(data)
   f.close()
-  # var f = newFileStream("blocks.save", fmWrite)
-  # f.write(self)
-  # f.flush()
 
 # ゲームをロードする
-proc loadProgress(self:var MineSweeper): bool =
-  # TODO: 読み込んだバイト列をオブジェクトに戻す
+proc loadProgress(self:var MineSweeper, isNew:bool): bool =
+  if isNew: return false
   var f: File
   try:
     f = open("save.txt", FileMode.fmRead)
-    let data: string = f.readAll()
-    self = data.fromJson(MineSweeper)
-    f.close()
-    removeSaveFile()
   except IOError:
     return false
+  let data: string = f.readAll()
+  self = data.fromJson(MineSweeper)
+  f.close()
+  removeSaveFile()
   return true
 
 #================================================================
@@ -819,10 +815,10 @@ proc loadProgress(self:var MineSweeper): bool =
 #
 #================================================================
 # ゲーム初期化処理
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool): MineSweeper =
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool, isNew:bool): MineSweeper =
   tb = terminalbuffer
   var ms = MineSweeper()
-  var isLoaded = ms.loadProgress()
+  var isLoaded = ms.loadProgress(isNew)
   if not isLoaded:
     ms.setting(blc, continueNum, isInfinity, isNoColor)
   game = ms
