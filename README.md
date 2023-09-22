@@ -17,6 +17,7 @@ Options:
   --noColor              play without colors.
   --continue [number]    play with a set number of continue.
   --infinite             play without Boom!!.
+  --new                  Discard save file and play a new game
   [5 <= number <= 20]    Set the number of vert and hor cells and start the game.
   None                   Set the min number (5) of vert and hor cells and start the game.
 ```

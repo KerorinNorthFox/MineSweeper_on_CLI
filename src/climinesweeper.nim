@@ -54,7 +54,7 @@ when isMainModule:
     isNoColor: bool = false
     defaultContinue: int = 3
     isInfinity: bool = false
-    isNew: bool = false
+    isNew: bool = true
     defaultBlc: int = 5
   for i, arg in args:
     if isSkip:
@@ -67,8 +67,9 @@ when isMainModule:
       of "--noColor": isNoColor = true
       of "--continue": defaultContinue = args[i+1].parseInt; isSkip = true
       of "--infinite": isInfinity = true
-      of "--new": isNew = true
+      of "--new": discard
       else:
+        isNew = false
         let blc: int = arg.parseInt
         if blc>=MIN_BLOCK and blc<=MAX_BLOCK:
           defaultBlc = blc
