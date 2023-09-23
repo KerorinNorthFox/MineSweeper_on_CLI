@@ -1,9 +1,7 @@
 import
   illwill,
-  std/os,
-  std/strutils,
-  std/strformat,
-  ./pkg/minesweeper
+  std/[os, strutils, strformat],
+  ./pkg/[minesweeper, utils]
 
 const
   HELP: string = """description:
@@ -30,14 +28,14 @@ proc exitProc() {.noconv.} =
   showCursor()
   quit(0)
 
-proc main(blc:int, defaultContinue: int, isInfinity:bool, isNoColor:bool, isNew:bool): void =
+proc main(args:Args): void =
   illwillInit(fullscreen=true)
   setControlCHook(exitProc)
   hideCursor()
   # illwillの画面作成
   var tb: TerminalBuffer = newTerminalBuffer(terminalWidth(), terminalHeight())
   # minesweeper初期化
-  var game: MineSweeper = MineSweeper.init(tb, blc, defaultContinue, isInfinity, isNoColor, isNew)
+  var game: MineSweeper = MineSweeper.init(tb, args)
 
   game.start()
   while(true):
@@ -46,17 +44,18 @@ proc main(blc:int, defaultContinue: int, isInfinity:bool, isNoColor:bool, isNew:
       exitProc()
 
 when isMainModule:
-  let args = commandLineParams()
+  let cmdArgs = commandLineParams()
 
   var
     isSkip: bool = false
     isQuit: bool = false
-    isNoColor: bool = false
-    defaultContinue: int = 3
-    isInfinity: bool = false
-    isNew: bool = true
-    defaultBlc: int = 5
-  for i, arg in args:
+    args: Args = Args()
+  args.blockNum = 5
+  args.defaultContinue = 3
+  args.isInfinity = false
+  args.isNoColor = false
+  args.isNew = true
+  for i, arg in cmdArgs:
     if isSkip:
       isSkip = false
       continue
@@ -64,15 +63,15 @@ when isMainModule:
       case arg
       of "-h", "--help": echo HELP; isQuit = true
       of "-v", "--version": echo GAME_VERSION; isQuit = true
-      of "--noColor": isNoColor = true
-      of "--continue": defaultContinue = args[i+1].parseInt; isSkip = true
-      of "--infinite": isInfinity = true
+      of "--noColor": args.isNoColor = true
+      of "--continue": args.defaultContinue = cmdArgs[i+1].parseInt; isSkip = true
+      of "--infinite": args.isInfinity = true
       of "--new": discard
       else:
-        isNew = false
+        args.isNew = false
         let blc: int = arg.parseInt
         if blc>=MIN_BLOCK and blc<=MAX_BLOCK:
-          defaultBlc = blc
+          args.blockNum = blc
         else: raise
 
     except:
@@ -80,4 +79,4 @@ when isMainModule:
       quit(1)
 
   if isQuit: quit(0)
-  main(defaultBlc, defaultContinue, isInfinity, isNoColor, isNew)
+  main(args)

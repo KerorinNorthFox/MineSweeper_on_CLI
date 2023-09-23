@@ -1,10 +1,6 @@
 import
   illwill,
-  std/os,
-  std/strutils,
-  std/strformat,
-  std/sequtils,
-  std/random,
+  std/[os, strutils, strformat, sequtils, random],
   ./utils
 
 from jsony import toJson, fromJson
@@ -171,7 +167,7 @@ proc resetMessage(self:MessageWindow): void
 #----------------------------------------------------------------
 #               MineSweeper Dec
 #----------------------------------------------------------------
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool, isNew:bool): MineSweeper
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, args:Args): MineSweeper
 
 proc setting(self:MineSweeper, blc:int, remainingContinue:int, isInfinity:bool, isNoColor:bool): void
 
@@ -816,12 +812,12 @@ proc loadProgress(self:var MineSweeper, isNew:bool): bool =
 #
 #================================================================
 # ゲーム初期化処理
-proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, blc:int, continueNum:int, isInfinity:bool, isNoColor:bool, isNew:bool): MineSweeper =
+proc init*(_:type MineSweeper, terminalbuffer:var TerminalBuffer, args:Args): MineSweeper =
   tb = terminalbuffer
   var ms = MineSweeper()
-  var isLoaded = ms.loadProgress(isNew)
+  var isLoaded = ms.loadProgress(args.isNew)
   if not isLoaded:
-    ms.setting(blc, continueNum, isInfinity, isNoColor)
+    ms.setting(args.blockNum, args.defaultContinue, args.isInfinity, args.isNoColor)
   game = ms
   return ms
 

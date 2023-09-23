@@ -50,3 +50,10 @@ proc moveUp*(self:var Cursor): void =
 proc moveDown*(self:var Cursor): void =
   self.update()
   self.y.inc()
+
+type Args* = ref object
+  blockNum*: int
+  defaultContinue*: int
+  isInfinity*: bool
+  isNoColor*: bool
+  isNew*: bool
